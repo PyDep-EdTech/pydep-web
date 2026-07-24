@@ -4,7 +4,7 @@ PyDep — это веб-приложение, разработанное на Dj
 
 ## 🔗 Ссылка на проект
 
-[https://github.com/JenIK-s/pydep-project-django](https://github.com/JenIK-s/pydep-project-django)
+[pydep](https://pydep.ru)
 
 ## ⚙️ Стек технологий
 
