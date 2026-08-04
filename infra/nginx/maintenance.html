@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex">
+    <title>PyDep — Ведутся технические работы</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Manrope:wght@500;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-top: #f0f4ff;
+            --bg-bottom: #e8eeff;
+            --text: #1a1f36;
+            --muted: #5c6578;
+            --accent-a: #007bff;
+            --accent-b: #6610f2;
+            --ide-bg: #1e1e2e;
+            --ide-header: #2a2a3c;
+            --ide-border: #3a3a52;
+            --code-green: #a6e3a1;
+            --code-blue: #89b4fa;
+            --code-pink: #f5c2e7;
+            --code-yellow: #f9e2af;
+            --code-orange: #fab387;
+            --code-comment: #6c7086;
+            --code-white: #cdd6f4;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            min-height: 100vh;
+            font-family: "Manrope", sans-serif;
+            color: var(--text);
+            background:
+                radial-gradient(ellipse 80% 50% at 20% 10%, rgba(0, 123, 255, 0.12), transparent),
+                radial-gradient(ellipse 70% 40% at 90% 80%, rgba(102, 16, 242, 0.1), transparent),
+                linear-gradient(160deg, var(--bg-top), var(--bg-bottom));
+            display: flex;
+            flex-direction: column;
+        }
+
+        .brand {
+            padding: 1.25rem 1.5rem;
+            font-weight: 800;
+            font-size: 1.25rem;
+            letter-spacing: -0.02em;
+            color: var(--accent-a);
+        }
+
+        .hero {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1.25rem 3rem;
+        }
+
+        .layout {
+            width: min(920px, 100%);
+            display: grid;
+            gap: 2.5rem;
+            align-items: center;
+        }
+
+        @media (min-width: 860px) {
+            .layout {
+                grid-template-columns: 1fr 1.1fr;
+                gap: 3rem;
+            }
+        }
+
+        .copy {
+            text-align: center;
+        }
+
+        @media (min-width: 860px) {
+            .copy {
+                text-align: left;
+            }
+        }
+
+        .eyebrow {
+            display: inline-block;
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--accent-a);
+            margin-bottom: 0.85rem;
+            opacity: 0;
+            animation: fadeInUp 0.7s ease 0.1s forwards;
+        }
+
+        h1 {
+            font-size: clamp(1.9rem, 4vw, 2.75rem);
+            font-weight: 800;
+            line-height: 1.15;
+            letter-spacing: -0.03em;
+            margin-bottom: 1rem;
+            background: linear-gradient(90deg, var(--accent-a), var(--accent-b));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            opacity: 0;
+            animation: fadeInDown 0.9s ease 0.2s forwards;
+        }
+
+        .lead {
+            font-size: 1.1rem;
+            line-height: 1.55;
+            color: var(--muted);
+            max-width: 28rem;
+            margin: 0 auto 1.5rem;
+            opacity: 0;
+            animation: fadeInUp 0.9s ease 0.35s forwards;
+        }
+
+        @media (min-width: 860px) {
+            .lead {
+                margin-left: 0;
+            }
+        }
+
+        .status {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.55rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--muted);
+            opacity: 0;
+            animation: fadeInUp 0.9s ease 0.5s forwards;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #f0ad4e;
+            box-shadow: 0 0 0 0 rgba(240, 173, 78, 0.55);
+            animation: pulse 1.6s ease-in-out infinite;
+        }
+
+        .ide {
+            background: var(--ide-bg);
+            border: 1px solid var(--ide-border);
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow:
+                0 24px 60px rgba(26, 31, 54, 0.22),
+                0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+            opacity: 0;
+            transform: translateY(18px);
+            animation: fadeInUp 0.9s ease 0.45s forwards;
+            font-family: "JetBrains Mono", monospace;
+        }
+
+        .ide-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.7rem 0.9rem;
+            background: var(--ide-header);
+            border-bottom: 1px solid var(--ide-border);
+        }
+
+        .traffic {
+            display: flex;
+            gap: 6px;
+        }
+
+        .traffic span {
+            width: 11px;
+            height: 11px;
+            border-radius: 50%;
+        }
+
+        .traffic .r { background: #ff5f56; }
+        .traffic .y { background: #ffbd2e; }
+        .traffic .g { background: #27c93f; }
+
+        .ide-title {
+            color: #9ca3af;
+            font-size: 0.75rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .ide-body {
+            padding: 1.1rem 1.15rem 1.35rem;
+            min-height: 220px;
+            font-size: 0.9rem;
+            line-height: 1.7;
+            color: var(--code-white);
+        }
+
+        .line {
+            display: block;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .ln {
+            color: var(--code-comment);
+            user-select: none;
+            margin-right: 0.85rem;
+        }
+
+        .kw { color: var(--code-pink); }
+        .fn { color: var(--code-blue); }
+        .str { color: var(--code-green); }
+        .cm { color: var(--code-comment); }
+        .num { color: var(--code-orange); }
+        .prop { color: var(--code-yellow); }
+
+        .cursor {
+            display: inline-block;
+            width: 0.55ch;
+            height: 1.15em;
+            background: var(--code-white);
+            vertical-align: text-bottom;
+            margin-left: 1px;
+            animation: blink 1s step-end infinite;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 0 1rem 1.5rem;
+            font-size: 0.85rem;
+            color: var(--muted);
+        }
+
+        @keyframes blink {
+            50% { opacity: 0; }
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(240, 173, 78, 0.55); }
+            70% { box-shadow: 0 0 0 10px rgba(240, 173, 78, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(240, 173, 78, 0); }
+        }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-24px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(24px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="brand">PyDep</div>
+
+    <main class="hero">
+        <div class="layout">
+            <section class="copy">
+                <div class="eyebrow">Status 503</div>
+                <h1>Ведутся технические работы</h1>
+                <p class="lead">
+                    Мы обновляем платформу, чтобы обучение было ещё быстрее и удобнее.
+                    Сайт скоро снова будет доступен.
+                </p>
+                <div class="status">
+                    <span class="dot" aria-hidden="true"></span>
+                    Сервис временно недоступен
+                </div>
+            </section>
+
+            <section class="ide" aria-label="Окно редактора кода">
+                <div class="ide-header">
+                    <div class="traffic" aria-hidden="true">
+                        <span class="r"></span>
+                        <span class="y"></span>
+                        <span class="g"></span>
+                    </div>
+                    <div class="ide-title">maintenance.py — PyDep</div>
+                </div>
+                <div class="ide-body" id="ide-body" aria-live="polite"></div>
+            </section>
+        </div>
+    </main>
+
+    <footer class="footer">© PyDep · Спасибо за терпение</footer>
+
+    <script>
+        (function () {
+            const lines = [
+                { html: '<span class="cm"># deploy/maintenance.py</span>' },
+                { html: '' },
+                { html: '<span class="kw">from</span> pydep <span class="kw">import</span> platform' },
+                { html: '' },
+                { html: '<span class="kw">def</span> <span class="fn">status</span>():' },
+                { html: '    <span class="kw">return</span> {' },
+                { html: '        <span class="str">"service"</span>: <span class="str">"PyDep"</span>,' },
+                { html: '        <span class="str">"state"</span>: <span class="str">"maintenance"</span>,' },
+                { html: '        <span class="str">"message"</span>: <span class="str">"Ведутся технические работы"</span>,' },
+                { html: '        <span class="str">"eta"</span>: <span class="str">"скоро вернёмся"</span>,' },
+                { html: '    }' },
+                { html: '' },
+                { html: '<span class="fn">print</span>(status()[<span class="str">"message"</span>])' },
+            ];
+
+            const body = document.getElementById("ide-body");
+            let lineIndex = 0;
+            let charIndex = 0;
+            let currentPlain = "";
+
+            function stripTags(html) {
+                const el = document.createElement("div");
+                el.innerHTML = html;
+                return el.textContent || "";
+            }
+
+            function renderPartial(html, visibleChars) {
+                let out = "";
+                let count = 0;
+                let i = 0;
+                while (i < html.length && count < visibleChars) {
+                    if (html[i] === "<") {
+                        const end = html.indexOf(">", i);
+                        out += html.slice(i, end + 1);
+                        i = end + 1;
+                    } else {
+                        out += html[i];
+                        count += 1;
+                        i += 1;
+                    }
+                }
+                return out;
+            }
+
+            function paint() {
+                let html = "";
+                for (let i = 0; i < lineIndex; i += 1) {
+                    const n = String(i + 1).padStart(2, " ");
+                    html += `<span class="line"><span class="ln">${n}</span>${lines[i].html || "&nbsp;"}</span>`;
+                }
+                if (lineIndex < lines.length) {
+                    const n = String(lineIndex + 1).padStart(2, " ");
+                    const partial = renderPartial(lines[lineIndex].html, charIndex);
+                    html += `<span class="line"><span class="ln">${n}</span>${partial}<span class="cursor"></span></span>`;
+                }
+                body.innerHTML = html;
+            }
+
+            function typeNext() {
+                if (lineIndex >= lines.length) {
+                    paint();
+                    setTimeout(restart, 2600);
+                    return;
+                }
+
+                currentPlain = stripTags(lines[lineIndex].html);
+                if (charIndex <= currentPlain.length) {
+                    paint();
+                    charIndex += 1;
+                    const delay = currentPlain.length === 0 ? 180 : 28 + Math.random() * 35;
+                    setTimeout(typeNext, delay);
+                } else {
+                    lineIndex += 1;
+                    charIndex = 0;
+                    setTimeout(typeNext, 120);
+                }
+            }
+
+            function restart() {
+                lineIndex = 0;
+                charIndex = 0;
+                typeNext();
+            }
+
+            typeNext();
+        })();
+    </script>
+</body>
+</html>

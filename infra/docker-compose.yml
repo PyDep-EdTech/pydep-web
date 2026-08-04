@@ -24,6 +24,9 @@ services:
 
     volumes:
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - ./nginx/maintenance.html:/var/html/maintenance.html:ro
+      # Флаг ручного режима техработ (создайте файл maintenance.on рядом с конфигом)
+      - ./nginx:/etc/nginx/maintenance-flag:ro
 
       - static_value:/var/html/static/
 
