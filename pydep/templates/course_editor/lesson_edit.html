@@ -1,152 +1,242 @@
-{% extends 'base.html' %}
+{% extends 'course_editor/base_studio.html' %}
 {% load static %}
 
 {% block title %}
-    {% if lesson %}Редактирование урока: {{ lesson.title }}{% else %}Создание нового урока{% endif %}
+    {% if lesson %}Редактирование: {{ lesson.title }}{% else %}Новый урок{% endif %} — Студия
 {% endblock %}
 
 {% block static %}
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-<!-- Editor.js CSS -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@editorjs/editorjs@latest/dist/editor.css">
+{{ block.super }}
 <style>
-    .editor-header {
-        margin-bottom: 30px;
+    .studio-editor-wrap { margin-bottom: 1.5rem; }
+    .editor-loading { text-align: center; padding: 2.5rem; color: var(--text-dim); }
+
+    /* ---- practice panel ---- */
+    .practice-panel__head h2 { display: flex; align-items: center; gap: .5rem; }
+    .practice-panel__head h2 i { color: var(--brand); }
+    .practice-panel__sub { margin: .3rem 0 0; font-size: .82rem; color: var(--text-dim); font-weight: 400; }
+    .practice-list { display: flex; flex-direction: column; gap: .55rem; }
+    .practice-item {
+        display: flex; align-items: center; gap: .8rem;
+        padding: .7rem .85rem; background: var(--surface-2);
+        border: 1px solid var(--border); border-radius: 12px;
+        transition: border-color .15s, box-shadow .15s, transform .15s;
     }
-    
-    #editorjs {
-        background: #fff;
-        border: 1px solid #e0e0e0;
-        border-radius: 8px;
-        padding: 20px;
-        min-height: 500px;
+    .practice-item:hover { border-color: var(--border-strong); transform: translateY(-1px); }
+    .practice-item__num {
+        flex: 0 0 28px; width: 28px; height: 28px; border-radius: 8px;
+        display: grid; place-items: center; font-weight: 700; font-size: .85rem;
+        color: var(--on-brand); background: var(--brand);
     }
-    
-    .editor-loading {
-        text-align: center;
-        padding: 40px;
-        color: #6c757d;
+    .practice-item__body { flex: 1; min-width: 0; }
+    .practice-item__title {
+        display: block; font-weight: 600; color: var(--heading); font-size: .92rem;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
-    
-    .collapsible-header {
-        cursor: pointer;
-        user-select: none;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 0.75rem 1rem;
-        background: #f8f9fa;
-        border-radius: 8px;
-        margin-bottom: 1rem;
-        transition: background 0.2s;
+    .practice-item__meta { display: flex; gap: .4rem; margin-top: .2rem; }
+    .practice-chip {
+        display: inline-flex; align-items: center; gap: .3rem;
+        font-size: .72rem; font-weight: 600; color: var(--text-dim);
+        background: var(--surface-3); padding: .12rem .5rem; border-radius: 999px;
     }
-    
-    .collapsible-header:hover {
-        background: #e9ecef;
+    .practice-chip--check { color: #1f9d6b; background: rgba(84, 214, 180, 0.14); }
+    .practice-item__actions { display: flex; gap: .35rem; flex-shrink: 0; }
+    .btn-icon {
+        width: 34px; height: 34px; border-radius: 9px; border: 1px solid var(--border);
+        background: var(--surface); color: var(--text-muted); cursor: pointer;
+        display: grid; place-items: center; transition: all .15s;
     }
-    
-    .collapsible-header h5 {
-        margin: 0;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
+    .btn-icon:hover { color: var(--heading); border-color: var(--border-strong); }
+    .practice-del:hover { color: #e5484d; border-color: rgba(229, 72, 77, .5); background: rgba(229, 72, 77, .08); }
+    .practice-empty {
+        text-align: center; padding: 2rem 1rem; color: var(--text-dim);
+        border: 1px dashed var(--border-strong); border-radius: 14px;
     }
-    
-    .collapsible-icon {
-        transition: transform 0.3s;
-        font-size: 1.2rem;
+    .practice-empty i { font-size: 1.8rem; display: block; margin-bottom: .5rem; color: var(--brand); }
+    .practice-empty p { margin: 0; font-size: .88rem; }
+    .practice-open-link {
+        display: inline-flex; align-items: center; gap: .5rem; margin-top: 1rem;
+        font-size: .85rem; font-weight: 600; color: var(--brand); text-decoration: none;
     }
-    
-    .collapsible-header.collapsed .collapsible-icon {
-        transform: rotate(-90deg);
+    .practice-open-link:hover { text-decoration: underline; }
+
+    /* ---- practice modal ---- */
+    .practice-modal { position: fixed; inset: 0; z-index: 1200; display: grid; place-items: center; padding: 1rem; }
+    .practice-modal[hidden] { display: none; }
+    .practice-modal__backdrop { position: absolute; inset: 0; background: rgba(8, 8, 12, .62); backdrop-filter: blur(3px); }
+    .practice-modal__card {
+        position: relative; width: min(560px, 100%); max-height: 90vh; overflow-y: auto;
+        background: var(--surface); border: 1px solid var(--border-strong);
+        border-radius: var(--radius-lg); box-shadow: var(--shadow-lg, 0 24px 60px rgba(0,0,0,.4));
+        padding: 1.3rem 1.4rem; animation: practicePop .2s ease;
     }
-    
-    .collapsible-content {
-        overflow: hidden;
-        transition: max-height 0.3s ease, opacity 0.3s ease, margin 0.3s ease, padding 0.3s ease;
+    @keyframes practicePop { from { opacity: 0; transform: translateY(10px) scale(.98); } to { opacity: 1; transform: none; } }
+    .practice-modal__head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+    .practice-modal__head h3 { margin: 0; font-size: 1.1rem; font-weight: 700; color: var(--heading); }
+    .practice-field { margin-bottom: .9rem; }
+    .practice-field label { display: block; font-size: .82rem; font-weight: 600; color: var(--text); margin-bottom: .35rem; }
+    .practice-field .req { color: #e5484d; }
+    .practice-hint { font-weight: 400; color: var(--text-dim); font-size: .76rem; }
+    .practice-field input, .practice-field textarea {
+        width: 100%; padding: .6rem .75rem; border-radius: 10px;
+        background: var(--surface-2); border: 1px solid var(--border); color: var(--text);
+        font-size: .9rem; resize: vertical; transition: border-color .15s, box-shadow .15s;
     }
-    
-    .collapsible-content.collapsed {
-        max-height: 0 !important;
-        opacity: 0;
-        margin: 0 !important;
-        padding: 0 !important;
+    .practice-field input:focus, .practice-field textarea:focus {
+        outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px rgba(255, 176, 32, .18);
     }
+    .practice-mono { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: .84rem !important; }
+    .practice-form__error {
+        background: rgba(229, 72, 77, .1); border: 1px solid rgba(229, 72, 77, .4);
+        color: #e5484d; padding: .55rem .75rem; border-radius: 9px; font-size: .84rem; margin-bottom: .8rem;
+    }
+    .practice-form__actions { display: flex; justify-content: flex-end; gap: .6rem; margin-top: .5rem; }
 </style>
 {% endblock %}
 
-{% block content %}
-<div class="container py-4">
-    {% if messages %}
-        {% for message in messages %}
-            <div class="alert alert-{{ message.tags }} content-card mb-4">
-                {{ message }}
-            </div>
-        {% endfor %}
-    {% endif %}
-    
-    <div class="content-card">
-        <div class="editor-header">
-            <h1>{% if lesson %}Редактирование урока: {{ lesson.title }}{% else %}Создание нового урока{% endif %}</h1>
+{% block studio_content %}
+<nav class="studio-breadcrumbs">
+    <a href="{% url 'studio:main' %}">Студия</a>
+    <span class="sep">/</span>
+    <a href="{% url 'studio:course_edit' course.id %}">{{ course.name }}</a>
+    <span class="sep">/</span>
+    <a href="{% url 'studio:module_edit' course.id module.id %}">{{ module.title }}</a>
+    <span class="sep">/</span>
+    <span>{% if lesson %}{{ lesson.title }}{% else %}Новый урок{% endif %}</span>
+</nav>
+
+<div class="studio-page-head">
+    <div>
+        <h1>{% if lesson %}Редактирование урока{% else %}Новый урок{% endif %}</h1>
+        <p>Модуль «{{ module.title }}»</p>
+    </div>
+    <a href="{% url 'studio:module_edit' course.id module.id %}" class="btn btn-ghost btn-sm">
+        <i class="bi bi-arrow-left"></i> К модулю
+    </a>
+</div>
+
+<div class="studio-panel studio-editor">
+    <form method="POST" id="lesson-form">
+        {% csrf_token %}
+
+        <div class="mb-4">
+            <label for="{{ form.title.id_for_label }}" class="form-label">Название урока</label>
+            {{ form.title }}
+            {% if form.title.errors %}
+                <div class="text-danger small mt-1">{{ form.title.errors }}</div>
+            {% endif %}
         </div>
-        
-        {% if request.GET.module_id %}
-            <div class="mb-3">
-                <a href="{% url 'studio:module_edit' course_id module_id %}" class="btn btn-outline-secondary btn-sm">
-                    <span>←</span> Назад к модулю
-                </a>
+
+        <div class="mb-4">
+            <label class="form-label">Контент урока</label>
+            <div id="editorjs">
+                <div class="editor-loading">Загрузка редактора…</div>
             </div>
-        {% endif %}
-        
-        <form method="POST" id="lesson-form">
-            {% csrf_token %}
-            
-            <div class="mb-4">
-                <div class="collapsible-header {% if lesson %}collapsed{% endif %}" data-target="title-section">
-                    <h5>
-                        <i class="bi bi-chevron-down collapsible-icon"></i>
-                        Название урока
-                    </h5>
-                </div>
-                <div class="collapsible-content {% if lesson %}collapsed{% endif %}" id="title-section">
-                    <div class="mb-3">
-                        <label for="{{ form.title.id_for_label }}" class="form-label">Название урока</label>
-                        {{ form.title }}
-                        {% if form.title.errors %}
-                            <div class="text-danger">{{ form.title.errors }}</div>
-                        {% endif %}
-                    </div>
-                </div>
+            <input type="hidden" name="content_blocks_json" id="content-blocks-json" value="{{ form.content_blocks_json.value|default:'' }}">
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <a href="{% url 'studio:module_edit' course.id module.id %}" class="btn btn-ghost">Отмена</a>
+            <button type="submit" class="btn btn-primary btn-lg">
+                <i class="bi bi-check-lg me-1"></i> {% if lesson %}Сохранить{% else %}Создать{% endif %}
+            </button>
+        </div>
+    </form>
+</div>
+
+{% if lesson %}
+<div class="studio-panel practice-panel"
+     id="practice-panel"
+     data-save-url="{% url 'studio:practice_task_save' course.id module.id lesson.id %}"
+     data-delete-url="{% url 'studio:practice_task_delete' course.id module.id lesson.id %}"
+     data-reorder-url="{% url 'studio:practice_task_reorder' course.id module.id lesson.id %}"
+     data-playground-url="{% url 'lesson:python_playground' %}?lesson={{ lesson.id }}">
+    {% csrf_token %}
+    <div class="studio-panel__title">
+        <div class="practice-panel__head">
+            <h2><i class="bi bi-terminal-fill"></i> Практика в песочнице</h2>
+            <p class="practice-panel__sub">Задания, которые откроются в песочнице по ссылке из урока.</p>
+        </div>
+        <button type="button" class="btn btn-primary btn-sm" id="practice-add-btn">
+            <i class="bi bi-plus-lg me-1"></i> Добавить задание
+        </button>
+    </div>
+
+    <div class="practice-list" id="practice-list">
+        {% for task in practice_tasks %}
+        <div class="practice-item" data-id="{{ task.id }}"
+             data-title="{{ task.title|escape }}"
+             data-statement="{{ task.statement|escape }}"
+             data-starter="{{ task.starter_code|escape }}"
+             data-expected="{{ task.expected_output|escape }}">
+            <span class="practice-item__num">{{ forloop.counter }}</span>
+            <span class="practice-item__body">
+                <span class="practice-item__title">{{ task.title }}</span>
+                <span class="practice-item__meta">
+                    {% if task.has_check %}<span class="practice-chip practice-chip--check"><i class="bi bi-patch-check"></i> авто-проверка</span>
+                    {% else %}<span class="practice-chip"><i class="bi bi-pencil"></i> без проверки</span>{% endif %}
+                </span>
+            </span>
+            <span class="practice-item__actions">
+                <button type="button" class="btn-icon practice-edit" title="Редактировать"><i class="bi bi-pencil"></i></button>
+                <button type="button" class="btn-icon practice-del" title="Удалить"><i class="bi bi-trash"></i></button>
+            </span>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="practice-empty" id="practice-empty" {% if practice_tasks %}hidden{% endif %}>
+        <i class="bi bi-clipboard-plus"></i>
+        <p>Пока нет заданий. Добавьте первое — оно появится в песочнице.</p>
+    </div>
+
+    <a class="practice-open-link" id="practice-open-link"
+       href="{% url 'lesson:python_playground' %}?lesson={{ lesson.id }}" target="_blank" rel="noopener"
+       {% if not practice_tasks %}hidden{% endif %}>
+        <i class="bi bi-box-arrow-up-right"></i> Открыть песочницу с этими заданиями
+    </a>
+</div>
+
+<div class="practice-modal" id="practice-modal" hidden>
+    <div class="practice-modal__backdrop" data-close></div>
+    <div class="practice-modal__card">
+        <div class="practice-modal__head">
+            <h3 id="practice-modal-title">Новое задание</h3>
+            <button type="button" class="btn-icon" data-close><i class="bi bi-x-lg"></i></button>
+        </div>
+        <form id="practice-form" class="practice-form">
+            <input type="hidden" name="task_id" id="practice-task-id" value="">
+            <div class="practice-field">
+                <label for="practice-title">Заголовок <span class="req">*</span></label>
+                <input type="text" id="practice-title" name="title" maxlength="200" placeholder="Например: Сумма двух чисел" required>
             </div>
-            
-            <div class="mb-4">
-                <div class="collapsible-header {% if lesson %}collapsed{% endif %}" data-target="content-section">
-                    <h5>
-                        <i class="bi bi-chevron-down collapsible-icon"></i>
-                        Контент урока (блочный редактор)
-                    </h5>
-                </div>
-                <div class="collapsible-content {% if lesson %}collapsed{% endif %}" id="content-section">
-                    <div class="mb-3">
-                        <label class="form-label">Контент урока (блочный редактор)</label>
-                        <div id="editorjs">
-                            <div class="editor-loading">Загрузка редактора...</div>
-                        </div>
-                        <input type="hidden" name="content_blocks_json" id="content-blocks-json" value="{{ form.content_blocks_json.value|default:'' }}">
-                    </div>
-                </div>
+            <div class="practice-field">
+                <label for="practice-statement">Условие <span class="req">*</span></label>
+                <textarea id="practice-statement" name="statement" rows="3" placeholder="Что нужно сделать" required></textarea>
             </div>
-            
-            <div class="d-flex gap-2">
-                <button type="submit" class="btn btn-primary btn-custom">{% if lesson %}Сохранить{% else %}Создать{% endif %}</button>
-                <a href="{% url 'studio:main' %}" class="btn btn-secondary btn-custom">Отмена</a>
+            <div class="practice-field">
+                <label for="practice-starter">Стартовый код <span class="practice-hint">подставится в редактор</span></label>
+                <textarea id="practice-starter" name="starter_code" rows="4" class="practice-mono" spellcheck="false" placeholder="# напишите решение здесь"></textarea>
+            </div>
+            <div class="practice-field">
+                <label for="practice-expected">Ожидаемый вывод <span class="practice-hint">заполните для авто-проверки</span></label>
+                <textarea id="practice-expected" name="expected_output" rows="3" class="practice-mono" spellcheck="false" placeholder="Точный вывод программы для кнопки «Проверить»"></textarea>
+            </div>
+            <div class="practice-form__error" id="practice-form-error" hidden></div>
+            <div class="practice-form__actions">
+                <button type="button" class="btn btn-ghost" data-close>Отмена</button>
+                <button type="submit" class="btn btn-primary" id="practice-save-btn">
+                    <i class="bi bi-check-lg me-1"></i> Сохранить задание
+                </button>
             </div>
         </form>
     </div>
 </div>
-</div>
+{% endif %}
+{% endblock %}
 
-<!-- Editor.js и плагины -->
+{% block studio_scripts %}
 <script src="https://cdn.jsdelivr.net/npm/@editorjs/editorjs@2.27.2"></script>
 <script src="https://cdn.jsdelivr.net/npm/@editorjs/header@2.7.0/dist/bundle.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@editorjs/list@1.9.0/dist/bundle.js"></script>
@@ -495,38 +585,166 @@
             });
         } catch (error) {
             console.error('Ошибка инициализации Editor.js:', error);
-            document.getElementById('editorjs').innerHTML = 
+            document.getElementById('editorjs').innerHTML =
                 '<div class="alert alert-danger">Ошибка инициализации редактора: ' + error.message + '</div>';
         }
     }
 })();
+</script>
 
-{% if lesson %}
-// Сворачивающиеся блоки
-document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.collapsible-header').forEach(header => {
-        header.addEventListener('click', function() {
-            const targetId = this.getAttribute('data-target');
-            const content = document.getElementById(targetId);
-            const isCollapsed = this.classList.contains('collapsed');
-            
-            if (isCollapsed) {
-                this.classList.remove('collapsed');
-                content.classList.remove('collapsed');
-                // Устанавливаем max-height для плавной анимации
-                content.style.maxHeight = content.scrollHeight + 'px';
-            } else {
-                this.classList.add('collapsed');
-                content.style.maxHeight = content.scrollHeight + 'px';
-                setTimeout(() => {
-                    content.classList.add('collapsed');
-                    content.style.maxHeight = '0';
-                }, 10);
+<script>
+/* ---- Управление заданиями практики ---- */
+(function () {
+    'use strict';
+    var panel = document.getElementById('practice-panel');
+    if (!panel) return;
+
+    var list = document.getElementById('practice-list');
+    var empty = document.getElementById('practice-empty');
+    var openLink = document.getElementById('practice-open-link');
+    var modal = document.getElementById('practice-modal');
+    var form = document.getElementById('practice-form');
+    var modalTitle = document.getElementById('practice-modal-title');
+    var errorBox = document.getElementById('practice-form-error');
+    var saveBtn = document.getElementById('practice-save-btn');
+    var csrf = panel.querySelector('[name=csrfmiddlewaretoken]').value;
+
+    var fields = {
+        id: document.getElementById('practice-task-id'),
+        title: document.getElementById('practice-title'),
+        statement: document.getElementById('practice-statement'),
+        starter: document.getElementById('practice-starter'),
+        expected: document.getElementById('practice-expected'),
+    };
+
+    function esc(s) {
+        return String(s == null ? '' : s)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+
+    function renumber() {
+        var items = list.querySelectorAll('.practice-item');
+        items.forEach(function (it, i) { it.querySelector('.practice-item__num').textContent = i + 1; });
+        var any = items.length > 0;
+        empty.hidden = any;
+        if (openLink) openLink.hidden = !any;
+    }
+
+    function chipHtml(hasCheck) {
+        return hasCheck
+            ? '<span class="practice-chip practice-chip--check"><i class="bi bi-patch-check"></i> авто-проверка</span>'
+            : '<span class="practice-chip"><i class="bi bi-pencil"></i> без проверки</span>';
+    }
+
+    function fillItem(el, t) {
+        el.dataset.id = t.id;
+        el.dataset.title = t.title;
+        el.dataset.statement = t.statement;
+        el.dataset.starter = t.starter_code;
+        el.dataset.expected = t.expected_output;
+        el.querySelector('.practice-item__title').textContent = t.title;
+        el.querySelector('.practice-item__meta').innerHTML = chipHtml(t.has_check);
+    }
+
+    function buildItem(t) {
+        var el = document.createElement('div');
+        el.className = 'practice-item';
+        el.innerHTML =
+            '<span class="practice-item__num"></span>' +
+            '<span class="practice-item__body">' +
+                '<span class="practice-item__title"></span>' +
+                '<span class="practice-item__meta"></span>' +
+            '</span>' +
+            '<span class="practice-item__actions">' +
+                '<button type="button" class="btn-icon practice-edit" title="Редактировать"><i class="bi bi-pencil"></i></button>' +
+                '<button type="button" class="btn-icon practice-del" title="Удалить"><i class="bi bi-trash"></i></button>' +
+            '</span>';
+        fillItem(el, t);
+        return el;
+    }
+
+    function openModal(item) {
+        errorBox.hidden = true;
+        if (item) {
+            modalTitle.textContent = 'Редактирование задания';
+            fields.id.value = item.dataset.id;
+            fields.title.value = item.dataset.title || '';
+            fields.statement.value = item.dataset.statement || '';
+            fields.starter.value = item.dataset.starter || '';
+            fields.expected.value = item.dataset.expected || '';
+        } else {
+            modalTitle.textContent = 'Новое задание';
+            form.reset();
+            fields.id.value = '';
+        }
+        modal.hidden = false;
+        setTimeout(function () { fields.title.focus(); }, 40);
+    }
+    function closeModal() { modal.hidden = true; }
+
+    document.getElementById('practice-add-btn').addEventListener('click', function () { openModal(null); });
+    modal.querySelectorAll('[data-close]').forEach(function (b) { b.addEventListener('click', closeModal); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !modal.hidden) closeModal(); });
+
+    list.addEventListener('click', function (e) {
+        var editBtn = e.target.closest('.practice-edit');
+        var delBtn = e.target.closest('.practice-del');
+        if (editBtn) { openModal(editBtn.closest('.practice-item')); return; }
+        if (delBtn) { deleteTask(delBtn.closest('.practice-item')); return; }
+    });
+
+    function deleteTask(item) {
+        if (!confirm('Удалить задание «' + (item.dataset.title || '') + '»?')) return;
+        var body = new URLSearchParams({ task_id: item.dataset.id });
+        fetch(panel.dataset.deleteUrl, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': csrf, 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: body.toString(),
+        }).then(function (r) { return r.json(); }).then(function (d) {
+            if (d.ok) { item.remove(); renumber(); }
+            else alert(d.error || 'Не удалось удалить задание.');
+        }).catch(function () { alert('Сетевая ошибка.'); });
+    }
+
+    form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        errorBox.hidden = true;
+        saveBtn.disabled = true;
+        var body = new URLSearchParams({
+            task_id: fields.id.value,
+            title: fields.title.value,
+            statement: fields.statement.value,
+            starter_code: fields.starter.value,
+            expected_output: fields.expected.value,
+        });
+        fetch(panel.dataset.saveUrl, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': csrf, 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: body.toString(),
+        }).then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+        .then(function (res) {
+            saveBtn.disabled = false;
+            if (!res.ok || !res.d.ok) {
+                errorBox.textContent = (res.d && res.d.error) || 'Не удалось сохранить.';
+                errorBox.hidden = false;
+                return;
             }
+            var t = res.d.task;
+            var existing = list.querySelector('.practice-item[data-id="' + t.id + '"]');
+            if (existing) fillItem(existing, t);
+            else list.appendChild(buildItem(t));
+            renumber();
+            closeModal();
+        }).catch(function () {
+            saveBtn.disabled = false;
+            errorBox.textContent = 'Сетевая ошибка. Попробуйте ещё раз.';
+            errorBox.hidden = false;
         });
     });
-});
-{% endif %}
+
+    renumber();
+})();
 </script>
 {% endblock %}
 

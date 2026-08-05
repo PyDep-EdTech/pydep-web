@@ -1,0 +1,28 @@
+{% if can_add_homework %}
+<section id="homework" class="lesson-form-section">
+  <div class="lesson-form-section__head">
+    <div class="lesson-form-section__icon"><i class="bi bi-journal-plus"></i></div>
+    <h2 class="lesson-form-section__title">Домашние задания</h2>
+  </div>
+
+  {% if lesson_homeworks %}
+  <div class="lesson-hw-list mb-3">
+    {% for hw in lesson_homeworks %}
+    <a href="{% url 'tutor:homework_detail' hw.pk %}" class="lesson-hw-item">
+      <div class="lesson-hw-item__main">
+        <strong>{{ hw.title }}</strong>
+        <span>{{ hw.state_label }}{% if hw.grade %} · {{ hw.grade }}/5{% endif %}{% if hw.due_date %} · до {{ hw.due_date|date:"d.m.Y" }}{% endif %}</span>
+      </div>
+      <i class="bi bi-chevron-right lesson-hw-item__chevron"></i>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="text-muted small mb-3">К этому занятию пока нет заданий.</p>
+  {% endif %}
+
+  <a href="{% url 'tutor:homework_create' %}?lesson={{ lesson.pk }}" class="btn btn-primary btn-sm">
+    <i class="bi bi-plus-lg me-1"></i>Выдать задание
+  </a>
+</section>
+{% endif %}

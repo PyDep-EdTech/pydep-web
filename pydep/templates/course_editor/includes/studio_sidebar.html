@@ -1,0 +1,61 @@
+<aside class="studio-sidebar">
+    <div class="studio-sidebar__head">
+        <div class="studio-sidebar__course">{{ course.name }}</div>
+        <div class="studio-sidebar__meta">
+            <span><i class="bi bi-layers me-1"></i>{{ course_tree|length }} мод.</span>
+            {% if stats %}
+            <span><i class="bi bi-journal-text me-1"></i>{{ stats.lesson_count }} урок.</span>
+            {% endif %}
+            <span class="{% if course.is_published %}text-success{% else %}text-warning{% endif %}">
+                {% if course.is_published %}Опубл.{% else %}Черновик{% endif %}
+            </span>
+        </div>
+    </div>
+
+    <ul class="studio-tree">
+        {% for item in course_tree %}
+        <li class="studio-tree__module {% if active_module_id == item.module.id %}is-open{% endif %}">
+            <div class="d-flex align-items-center gap-1">
+                <button type="button" class="btn btn-sm btn-ghost studio-tree__toggle px-1" aria-label="Развернуть">
+                    <i class="bi bi-chevron-right studio-tree__chevron"></i>
+                </button>
+                <a href="{% url 'studio:module_edit' course.id item.module.id %}"
+                   class="studio-tree__module-head flex-grow-1 {% if active_module_id == item.module.id and not active_lesson_id %}is-active{% endif %}">
+                    <i class="bi bi-folder2"></i>
+                    <span>{{ item.module.title }}</span>
+                </a>
+            </div>
+            <ul class="studio-tree__lessons">
+                {% for lesson_item in item.lessons %}
+                <li class="studio-tree__lesson">
+                    <a href="{% url 'studio:lesson_edit' course.id item.module.id lesson_item.lesson.id %}"
+                       class="{% if active_lesson_id == lesson_item.lesson.id %}is-active{% endif %}">
+                        <i class="bi bi-file-earmark-text"></i>
+                        {{ lesson_item.lesson.title }}
+                    </a>
+                </li>
+                {% endfor %}
+                <li class="studio-tree__lesson">
+                    <a href="{% url 'studio:lesson_create' course.id item.module.id %}">
+                        <i class="bi bi-plus-circle"></i> Новый урок
+                    </a>
+                </li>
+            </ul>
+        </li>
+        {% empty %}
+        <li class="text-muted small px-2 py-2">Модулей пока нет</li>
+        {% endfor %}
+    </ul>
+
+    <div class="studio-sidebar__actions">
+        <a href="{% url 'studio:course_edit' course.id %}" class="btn btn-ghost btn-sm {% if studio_section == 'settings' %}active{% endif %}">
+            <i class="bi bi-gear me-1"></i> Настройки курса
+        </a>
+        <a href="{% url 'studio:module_create' course.id %}" class="btn btn-ghost btn-sm">
+            <i class="bi bi-folder-plus me-1"></i> Новый модуль
+        </a>
+        <a href="{% url 'lesson:course_detail' course.slug %}" class="btn btn-ghost btn-sm" target="_blank" rel="noopener">
+            <i class="bi bi-box-arrow-up-right me-1"></i> Предпросмотр
+        </a>
+    </div>
+</aside>

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>home.dnsmasq</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/opt/homebrew/opt/dnsmasq/sbin/dnsmasq</string>
+        <string>--keep-in-foreground</string>
+        <string>-C</string>
+        <string>/opt/homebrew/etc/dnsmasq.conf</string>
+        <string>-7</string>
+        <string>/opt/homebrew/etc/dnsmasq.d/,*.conf</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+    <key>StandardOutPath</key>
+    <string>/var/log/home.dnsmasq.log</string>
+    <key>StandardErrorPath</key>
+    <string>/var/log/home.dnsmasq.log</string>
+</dict>
+</plist>

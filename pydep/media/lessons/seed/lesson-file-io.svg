@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 260" role="img" aria-label="$09;K">
+  <rect width="720" height="260" rx="16" fill="#1E1E21"/>
+  <text x="360" y="32" text-anchor="middle" fill="#F1EFEA" font-size="18" font-weight="700">@>3@0<<0 � D09; =0 48A:5</text>
+  <rect x="80" y="60" width="220" height="140" rx="10" fill="#26262A" stroke="#FFB020" stroke-width="2"/>
+  <text x="190" y="95" text-anchor="middle" fill="#FFB020" font-family="monospace" font-size="14">main.py</text>
+  <text x="190" y="125" text-anchor="middle" fill="#989790" font-size="11">with open(...)</text>
+  <text x="190" y="145" text-anchor="middle" fill="#989790" font-size="11">f.write()</text>
+  <text x="190" y="165" text-anchor="middle" fill="#989790" font-size="11">f.read()</text>
+  <text x="330" y="130" fill="#54D6B4" font-size="28">�</text>
+  <rect x="420" y="60" width="220" height="140" rx="10" fill="#0a0f0d" stroke="#54D6B4" stroke-width="2"/>
+  <text x="530" y="100" text-anchor="middle" fill="#aff5b4" font-family="monospace" font-size="13">notes.txt</text>
+  <text x="530" y="130" text-anchor="middle" fill="#67665F" font-size="11">5@20O AB@>:0</text>
+  <text x="530" y="150" text-anchor="middle" fill="#67665F" font-size="11">B>@0O AB@>:0</text>
+  <text x="360" y="235" text-anchor="middle" fill="#989790" font-size="12">encoding='utf-8'  4;O @CAA:>3> B5:AB0</text>
+</svg>

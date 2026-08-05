@@ -4,6 +4,16 @@ register = template.Library()
 
 
 @register.filter
+def get_item(mapping, key):
+    if not mapping:
+        return None
+    try:
+        return mapping.get(int(key))
+    except (TypeError, ValueError):
+        return mapping.get(key)
+
+
+@register.filter
 def pluralize_months(value):
     try:
         value = int(value)

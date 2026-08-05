@@ -1,0 +1,109 @@
+{% extends 'tutor/base.html' %}
+{% load static %}
+
+{% block title %}{{ hw.title }} — Мой репетитор{% endblock %}
+
+{% block static %}
+<style>
+    .hw-shell { max-width: 820px; margin: 0 auto; }
+    .hw-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 6px; }
+    .hw-state { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 999px; font-size: .82rem; font-weight: 700; }
+    .st-assigned { background: rgba(251,191,36,.16); color: #fcd34d; border: 1px solid rgba(251,191,36,.3); }
+    .st-submitted { background: rgba(255, 176, 32,.14); color: #a5f3fc; border: 1px solid rgba(255, 176, 32,.3); }
+    .st-graded { background: rgba(52,211,153,.16); color: #6ee7b7; border: 1px solid rgba(52,211,153,.3); }
+    .hw-section { margin-bottom: 18px; }
+    .hw-section h5 { font-size: 1.05rem; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+    .hw-desc { white-space: pre-wrap; color: #d7d7e6; line-height: 1.7; }
+    .file-pill { display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--border); color: var(--text); font-weight: 600; }
+    .file-pill:hover { color: #fff; border-color: var(--brand); }
+    .meta-row { display: flex; flex-wrap: wrap; gap: 18px; color: var(--text-muted); font-size: .9rem; }
+    .grade-big { font-family: 'Bricolage Grotesque', sans-serif; font-size: 2.6rem; font-weight: 700; line-height: 1; background: var(--grad-brand); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="py-5">
+  <div class="container px-4 px-lg-3 hw-shell">
+    <a href="{% url 'tutor:homework_list' %}" class="btn btn-ghost btn-sm mb-3"><i class="bi bi-arrow-left me-1"></i> К заданиям</a>
+
+    {% if messages %}{% for message in messages %}<div class="alert alert-{{ message.tags }}">{{ message }}</div>{% endfor %}{% endif %}
+
+    <div class="hw-head">
+      <h1 class="fw-bold mb-0">{{ hw.title }}</h1>
+      <span class="hw-state st-{{ hw.state }}">{{ hw.state_label }}</span>
+    </div>
+    <div class="meta-row mb-4">
+      <span><i class="bi bi-person-badge me-1"></i>{{ hw.teacher.get_full_name|default:hw.teacher.username }}</span>
+      <span><i class="bi bi-mortarboard me-1"></i>{{ hw.student.get_full_name|default:hw.student.username }}</span>
+      <span><i class="bi bi-bookmark me-1"></i>{{ hw.lesson.subject }}</span>
+      {% if hw.due_date %}<span class="{% if hw.is_overdue %}text-danger{% endif %}"><i class="bi bi-calendar-event me-1"></i>до {{ hw.due_date|date:"d.m.Y" }}{% if hw.is_overdue %} (просрочено){% endif %}</span>{% endif %}
+    </div>
+
+    <div class="content-card mb-4">
+      <div class="hw-section">
+        <h5><i class="bi bi-journal-text" style="color:var(--brand)"></i> Задание</h5>
+        <div class="hw-desc">{{ hw.description }}</div>
+      </div>
+      {% if hw.attachment %}
+        <a class="file-pill" href="{{ hw.attachment.url }}" download><i class="bi bi-paperclip"></i> Материалы к заданию</a>
+      {% endif %}
+    </div>
+
+    {# ─────────── Сдача ученика ─────────── #}
+    <div class="content-card mb-4">
+      <h5 class="mb-3"><i class="bi bi-upload" style="color:var(--brand)"></i> Решение</h5>
+      {% if hw.submitted_at %}
+        {% if hw.submission_text %}<div class="hw-desc mb-3">{{ hw.submission_text }}</div>{% endif %}
+        {% if hw.submission_file %}<a class="file-pill mb-3" href="{{ hw.submission_file.url }}" download><i class="bi bi-file-earmark-arrow-down"></i> Файл решения</a>{% endif %}
+        <div class="text-muted small mt-2"><i class="bi bi-check2 me-1"></i>Сдано {{ hw.submitted_at|date:"d.m.Y H:i" }}</div>
+        {% if is_recipient and not hw.grade %}
+          <hr>
+          <p class="text-muted small mb-2">Можно дополнить решение, пока преподаватель не проверил:</p>
+          <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="submit">
+            <div class="mb-3">{{ submit_form.submission_text }}</div>
+            <div class="mb-3">{{ submit_form.submission_file }}</div>
+            <button class="btn btn-primary btn-sm" type="submit"><i class="bi bi-arrow-repeat me-1"></i> Обновить решение</button>
+          </form>
+        {% endif %}
+      {% elif is_recipient %}
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="submit">
+          <div class="mb-3"><label class="form-label">Ответ</label>{{ submit_form.submission_text }}</div>
+          <div class="mb-3"><label class="form-label">Файл (необязательно)</label>{{ submit_form.submission_file }}</div>
+          <button class="btn btn-primary" type="submit"><i class="bi bi-send me-1"></i> Сдать на проверку</button>
+        </form>
+      {% else %}
+        <p class="text-muted mb-0"><i class="bi bi-hourglass-split me-1"></i>Ученик ещё не сдал работу.</p>
+      {% endif %}
+    </div>
+
+    {# ─────────── Проверка преподавателя ─────────── #}
+    {% if hw.grade %}
+      <div class="content-card">
+        <h5 class="mb-3"><i class="bi bi-patch-check" style="color:#6ee7b7"></i> Оценка</h5>
+        <div class="d-flex align-items-center gap-3 mb-2">
+          <div class="grade-big">{{ hw.grade }}</div>
+          <div class="text-muted">из 5{% if hw.reviewed_at %} · проверено {{ hw.reviewed_at|date:"d.m.Y H:i" }}{% endif %}</div>
+        </div>
+        {% if hw.teacher_comment %}<div class="hw-desc">{{ hw.teacher_comment }}</div>{% endif %}
+      </div>
+    {% elif is_owner_teacher and hw.submitted_at %}
+      <div class="content-card">
+        <h5 class="mb-3"><i class="bi bi-patch-check" style="color:var(--brand)"></i> Проверить работу</h5>
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="grade">
+          <div class="row g-3">
+            <div class="col-md-4"><label class="form-label">Оценка (1–5)</label>{{ grade_form.grade }}</div>
+            <div class="col-12"><label class="form-label">Комментарий</label>{{ grade_form.teacher_comment }}</div>
+          </div>
+          <button class="btn btn-primary mt-3" type="submit"><i class="bi bi-check2-circle me-1"></i> Выставить оценку</button>
+        </form>
+      </div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

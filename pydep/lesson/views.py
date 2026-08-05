@@ -1,28 +1,73 @@
-import calendar
-import uuid
-from datetime import datetime
-from urllib.parse import urlencode
+import json
 from urllib.parse import unquote
 
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
 from django.db.models.query import QuerySet
+from django.http import Http404
+from django.http import JsonResponse
 from django.shortcuts import render
 from django.shortcuts import redirect
-from django.http import HttpResponseRedirect, JsonResponse
+from django.shortcuts import get_object_or_404
 from django.urls import reverse
-from django.views.decorators.http import require_http_methods
-from django.core.files.storage import default_storage
-from django.core.files.base import ContentFile
+from django.utils import timezone
+from django.views.decorators.http import require_POST
 
 from .forms import EditProfile
 from .models import Course
 from .models import Module
 from .models import Lesson
 from .models import Category
+from .models import PracticeTask
 from .models import UserLessonProgress
-from users.models import CancelledLesson
-from users.models import Schedule
+from .models import CourseEnrollment
+from .models import ModulesInCourse
+from .models import LessonsInModule
 from .paginator import paginator
+from .search import SORT_CHOICES
+from .search import apply_course_filters
+from .search import distinct_languages
+from .search import distinct_levels
+from .search import expand_query
+
+
+def _course_celebration_key(course_id):
+    return f"course_celebration_{course_id}"
+
+
+def _course_is_fully_completed(user, course):
+    total_lessons = 0
+    for module in course.ordered_modules():
+        total_lessons += module.ordered_lessons().count()
+    if total_lessons == 0:
+        return False
+    completed = UserLessonProgress.objects.filter(
+        user=user,
+        course=course,
+        completed=True,
+    ).count()
+    return completed >= total_lessons
+
+
+def _get_course_by_slug(course_slug):
+    return get_object_or_404(Course, slug=course_slug)
+
+
+def _get_course_module(course_slug, module_slug):
+    course = _get_course_by_slug(course_slug)
+    module = get_object_or_404(Module, slug=module_slug)
+    if not ModulesInCourse.objects.filter(course=course, module=module).exists():
+        raise Http404("Модуль не входит в курс")
+    return course, module
+
+
+def _get_course_module_lesson(course_slug, module_slug, lesson_slug):
+    course, module = _get_course_module(course_slug, module_slug)
+    lesson = get_object_or_404(Lesson, slug=lesson_slug)
+    if not LessonsInModule.objects.filter(module=module, lesson=lesson).exists():
+        raise Http404("Урок не входит в модуль")
+    return course, module, lesson
 
 
 def query_params_in_dict(query_params: str) -> dict:
@@ -33,33 +78,119 @@ def query_params_in_dict(query_params: str) -> dict:
     } if query_params else {}
 
 
-def search_course_with_name(
-        name: str,
-        base_queryset: QuerySet = None
-) -> QuerySet:
-    """
-    Поиск курса по имени (регистронезависимо) с использованием Python.
-    Работает с существующим QuerySet.
-    """
-    name = unquote(name).strip()
-    if not name:
-        return base_queryset or Course.objects.filter(is_published=True)
+def _parse_category_slugs(request) -> list[str]:
+    slugs = list(request.GET.getlist("category"))
+    if slugs:
+        return slugs
+    legacy = request.GET.get("category")
+    if legacy:
+        return [s for s in unquote(legacy).split(",") if s]
+    return []
 
-    if base_queryset is None:
-        base_queryset = Course.objects.filter(is_published=True)
 
-    # Перебираем только объекты из базового QuerySet
-    result = [
-        course for course in base_queryset if name.lower(
-        ) in course.name.lower()
-    ]
+def _courses_base_queryset() -> QuerySet[Course]:
+    return Course.objects.prefetch_related("modules", "category")
 
-    # Создаём новый QuerySet с результатом, сохраняя тип
-    queryset = base_queryset.none()  # пустой QuerySet того же типа
-    queryset |= base_queryset.filter(
-        id__in=[c.id for c in result]
-    )  # добавляем найденные
-    return queryset
+
+def courses_list(request, queryset=None):
+    """Каталог курсов с умным поиском и фильтрами."""
+    categories = Category.objects.all()
+    selected_category_slugs = _parse_category_slugs(request)
+    query = request.GET.get("q", "")
+    level = request.GET.get("level", "")
+    language = request.GET.get("lang", "")
+    sort = request.GET.get("sort", "relevance" if query else "name")
+    if sort not in SORT_CHOICES:
+        sort = "relevance" if query else "name"
+
+    base = queryset if queryset is not None else _courses_base_queryset()
+    courses_qs, search_hits, meta = apply_course_filters(
+        base,
+        query=query,
+        category_slugs=selected_category_slugs or None,
+        level=level,
+        language=language,
+        sort=sort,
+    )
+
+    hit_map = {hit.course.id: hit for hit in search_hits}
+
+    default_sort = "relevance" if query else "name"
+    active_filter_count = len(selected_category_slugs)
+    if level:
+        active_filter_count += 1
+    if language:
+        active_filter_count += 1
+    if sort != default_sort:
+        active_filter_count += 1
+
+    context = {
+        "courses": paginator(request, courses_qs),
+        "categories": categories,
+        "selected_category_slugs": selected_category_slugs,
+        "selected_level": level,
+        "selected_language": language,
+        "selected_sort": sort,
+        "search_query": meta.get("query", ""),
+        "search_variants": meta.get("variants", []),
+        "search_hit_map": hit_map,
+        "result_count": meta.get("total_before_pagination", 0),
+        "languages": distinct_languages(_courses_base_queryset().filter(is_published=True)),
+        "levels": distinct_levels(),
+        "sort_choices": SORT_CHOICES,
+        "active_filter_count": active_filter_count,
+        "filters_expanded": active_filter_count > 0,
+    }
+
+    return render(
+        request,
+        template_name="lesson/courses_list.html",
+        context=context,
+    )
+
+
+def course_search_api(request):
+    """JSON-подсказки для живого поиска в каталоге."""
+    query = request.GET.get("q", "").strip()
+    if len(query) < 2:
+        return JsonResponse({"query": query, "total": 0, "results": [], "variants": []})
+
+    selected_category_slugs = _parse_category_slugs(request)
+    level = request.GET.get("level", "")
+    language = request.GET.get("lang", "")
+
+    courses_qs, search_hits, meta = apply_course_filters(
+        _courses_base_queryset(),
+        query=query,
+        category_slugs=selected_category_slugs or None,
+        level=level,
+        language=language,
+        sort="relevance",
+    )
+
+    results = []
+    for hit in search_hits[:8]:
+        course = hit.course
+        results.append({
+            "id": course.id,
+            "name": course.name,
+            "language": course.programming_language,
+            "level": course.level,
+            "category": course.category.name if course.category_id else "",
+            "price": course.price,
+            "monthly_price": course.monthly_price,
+            "image": course.image.url if course.image else "",
+            "url": reverse("lesson:course_detail", kwargs={"course_slug": course.slug}),
+            "matched_in": hit.matched_in,
+            "score": hit.score,
+        })
+
+    return JsonResponse({
+        "query": meta.get("query", ""),
+        "variants": expand_query(query)[:6],
+        "total": len(search_hits),
+        "results": results,
+    })
 
 
 def index(request):
@@ -69,101 +200,172 @@ def index(request):
     return render(request, 'lesson/index.html')
 
 
+def page_not_found(request, exception):
+    return render(request, '404.html', status=404)
+
+
+def server_error(request):
+    return render(request, '500.html', status=500)
+
+
+def permission_denied_page(request, exception):
+    return render(request, '403.html', status=403)
+
+
+def normalize_playground_output(text):
+    """Сверка вывода в песочнице (та же логика, что в python-playground.js)."""
+    normalized = str(text).replace('\r', '')
+    lines = [line.rstrip() for line in normalized.split('\n')]
+    return '\n'.join(lines).rstrip('\n')
+
+
+def python_playground(request):
+    """
+    Встроенный Python-интерпретатор в браузере (Pyodide — настоящий CPython 3
+    в WebAssembly). Код выполняется только на клиенте: сервер код не принимает
+    и не запускает.
+
+    С параметром ?lesson=<id> открывается в режиме практики: в боковой панели
+    показываются задания, привязанные к уроку.
+    """
+    tasks = []
+    lesson_title = ''
+    lesson_id = request.GET.get('lesson')
+    if lesson_id and str(lesson_id).isdigit():
+        lesson_obj = Lesson.objects.filter(pk=lesson_id).first()
+        if lesson_obj:
+            lesson_title = lesson_obj.title
+            for t in lesson_obj.practice_tasks.all():
+                tasks.append({
+                    'id': t.id,
+                    'title': t.title,
+                    'statement': t.statement,
+                    'starter': t.starter_code,
+                    'has_check': t.has_check,
+                })
+    return render(request, "lesson/python_playground.html", {
+        'pg_tasks': tasks,
+        'pg_lesson_title': lesson_title,
+    })
+
+
+def python_playground_runner(request):
+    """Минимальная страница для изолированного запуска Pyodide в sandbox-iframe."""
+    return render(request, 'lesson/python_playground_runner.html')
+
+
+@require_POST
+def python_playground_check(request):
+    """
+    Сверка вывода программы с эталоном задания.
+    Ожидаемый вывод хранится только на сервере — в HTML не отдаётся.
+    """
+    try:
+        payload = json.loads(request.body.decode('utf-8'))
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return JsonResponse({'error': 'invalid_json'}, status=400)
+
+    task_id = payload.get('task_id')
+    output = payload.get('output', '')
+
+    if not task_id:
+        return JsonResponse({'error': 'missing_task_id'}, status=400)
+
+    task = PracticeTask.objects.filter(pk=task_id).first()
+    if not task or not task.has_check:
+        return JsonResponse({'error': 'task_not_found'}, status=404)
+
+    got = normalize_playground_output(output)
+    expected = normalize_playground_output(task.expected_output)
+    ok = got == expected
+
+    response = {'ok': ok}
+    if not ok:
+        response['expected'] = task.expected_output
+        response['got'] = output
+    return JsonResponse(response)
+
+
 def category_detail(request, slug):
     categories = Category.objects.all()
     category = Category.objects.get(slug=slug)
-    courses = Course.objects.filter(category=category)
+    courses = Course.objects.filter(category=category, is_published=True)
     return render(
         request,
         "lesson/courses_list.html",
-        {"courses": courses, "categories": categories, "category": category}
-    )
-
-
-def courses_list(request, queryset=None):
-    """
-    Получение списка всех курсов или курсов по категориям
-    """
-    query_params = request.GET.urlencode()
-    query_params_dict = query_params_in_dict(query_params)
-    categories = Category.objects.all()
-    if request.method == "POST":
-        params = {}
-        category = request.POST.getlist("category")
-
-        if category:
-            if len(category) > 1:
-                params["category"] = ",".join(category)
-                print(2, params)
-            else:
-                params["category"] = "".join(category)
-        q = request.POST.get("q")
-        if q:
-            params["q"] = q
-        url = f"{reverse('lesson:courses')}?{urlencode(params)}"
-        return HttpResponseRedirect(url)
-
-    selected_category_slugs = []
-    if not query_params_dict:
-        courses = Course.objects.prefetch_related().filter(is_published=True)
-    else:
-        courses = Course.objects.prefetch_related().filter(is_published=True)
-        q = query_params_dict.get("q")
-        category_param = query_params_dict.get("category")
-        if q:
-            courses = search_course_with_name(q, courses)
-        if category_param:
-            slugs = unquote(category_param).split(",")
-            selected_category_slugs = slugs
-            category_qs = Category.objects.filter(slug__in=slugs)
-
-            courses = courses.filter(category__in=category_qs)
-
-    context = {
-        'courses': paginator(request, courses),
-        "categories": categories,
-        "selected_category_slugs": selected_category_slugs
-    }
-
-    return render(
-        request,
-        template_name='lesson/courses_list.html',
-        context=context
+        {
+            "courses": paginator(request, courses),
+            "categories": categories,
+            "category": category,
+            "selected_category_slugs": [slug],
+            "selected_level": "",
+            "selected_language": "",
+            "selected_sort": "name",
+            "search_query": "",
+            "search_variants": [],
+            "search_hit_map": {},
+            "result_count": courses.count(),
+            "languages": distinct_languages(),
+            "levels": distinct_levels(),
+            "sort_choices": SORT_CHOICES,
+            "active_filter_count": 1,
+            "filters_expanded": True,
+        },
     )
 
 
 @login_required
-def course_detail(request, course_name):
+def course_detail(request, course_slug):
     """
     Получение модулей в курсе и прогресса прохождения курса
     """
-    course = Course.objects.get(name=course_name)
-    modules_user = Module.objects.filter(course=course)
+    course = _get_course_by_slug(course_slug)
     user_modules = []
 
-    # Если в курсе не открыт первый урок, то открываем
-    course_modules = list(course.modules.all())
-    if course_modules:
+    # Заявка на платный курс: пользователь жмёт «Записаться».
+    if request.method == 'POST' and not course.is_free:
+        enrollment, _ = CourseEnrollment.objects.get_or_create(
+            user=request.user, course=course
+        )
+        # Повторная подача после отказа — снова на рассмотрение.
+        if enrollment.status == CourseEnrollment.Status.REJECTED:
+            enrollment.status = CourseEnrollment.Status.PENDING
+            enrollment.decided_at = None
+            enrollment.decided_by = None
+            enrollment.save(
+                update_fields=['status', 'decided_at', 'decided_by']
+            )
+        if enrollment.status == CourseEnrollment.Status.APPROVED:
+            messages.info(request, 'Вы уже записаны на этот курс.')
+        else:
+            messages.success(
+                request,
+                'Заявка отправлена. Курс откроется после одобрения.',
+            )
+        return redirect('lesson:course_detail', course_slug=course.slug)
+
+    access = course.access_for(request.user)
+
+    # Первый урок открываем только при наличии доступа
+    # (бесплатные — всем, платные — после одобрения заявки).
+    course_modules = list(course.ordered_modules())
+    if access == 'open' and course_modules:
         first_module = course_modules[0]
-        first_module_lessons = list(first_module.lessons.all())
+        first_module_lessons = list(first_module.ordered_lessons())
         if first_module_lessons:
             first_lesson = first_module_lessons[0]
-            # Проверяем, есть ли уже прогресс по первому уроку
             first_lesson_exists = UserLessonProgress.objects.filter(
                 user=request.user,
                 course=course,
                 module=first_module,
                 lesson=first_lesson
             ).exists()
-            
+
             if not first_lesson_exists:
-                # Убираем флаг current у всех уроков этого курса
                 UserLessonProgress.objects.filter(
                     user=request.user,
                     course=course
                 ).update(current=False)
-                
-                # Создаем первый урок как текущий
                 UserLessonProgress.objects.create(
                     user=request.user,
                     course=course,
@@ -174,11 +376,11 @@ def course_detail(request, course_name):
 
     total_lessons_count = 0
     total_completed_count = 0
-    course_modules_list = list(course.modules.all())
+    course_modules_list = list(course.ordered_modules())
     
     # Используем course_modules_list для правильного порядка модулей
     for module_index, module in enumerate(course_modules_list):
-        lessons = module.lessons.all()
+        lessons = module.ordered_lessons()
         total_lessons = lessons.count()
         total_lessons_count += total_lessons
 
@@ -207,7 +409,7 @@ def course_detail(request, course_name):
             # Проверяем, пройден ли предыдущий модуль полностью
             try:
                 prev_module = course_modules_list[module_index - 1]
-                prev_module_lessons = prev_module.lessons.all()
+                prev_module_lessons = prev_module.ordered_lessons()
                 prev_completed_lessons = UserLessonProgress.objects.filter(
                     user=request.user,
                     course=course,
@@ -234,6 +436,10 @@ def course_detail(request, course_name):
             if has_current_lesson:
                 is_available = True
 
+        # Без доступа к курсу все модули заблокированы.
+        if access != 'open':
+            is_available = False
+
         user_modules.append({
             'module': module,
             'progress': progress,
@@ -247,40 +453,39 @@ def course_detail(request, course_name):
     total_progress = int(
         (total_completed_count / total_lessons_count) * 100
     ) if total_lessons_count > 0 else 0
-    # form = RegisterCourseForm(request.POST or None)
-    # if request.method == 'POST':
-    #     form_data = {
-    #         'user': request.user,
-    #         'course': course
-    #     }
-    #     RegisterCourse.objects.create(**form_data)
-    #     return redirect('lesson:profile')
-    # Расчет для SVG кругового прогресса (длина окружности = 2 * π * 15 ≈ 94.25)
-    circle_circumference = 94.25
-    circle_dasharray = (circle_circumference * total_progress / 100) if total_progress > 0 else 0
-    
+
+    celebration_key = _course_celebration_key(course.pk)
+    show_celebration = (
+        total_progress == 100
+        and total_lessons_count > 0
+        and request.session.pop(celebration_key, False)
+    )
+
     context = {
         'course': course,
         'modules': user_modules,
-        # 'form': form,
+        'access': access,
+        'is_free': course.is_free,
         "total_progress": total_progress,
         "total_lessons_count": total_lessons_count,
         "total_completed_count": total_completed_count,
-        "circle_dasharray": circle_dasharray,
-        "circle_circumference": circle_circumference,
+        "show_celebration": show_celebration,
     }
     return render(request, 'lesson/course_detail.html', context)
 
 
 # @course_required
 @login_required
-def lesson_detail(request, course_name, module_name, lesson_name):
+def lesson_detail(request, course_slug, module_slug, lesson_slug):
     """
     Просмотр материалов урока
     """
-    course = Course.objects.get(name=course_name)
-    module = Module.objects.get(title=module_name)
-    lesson = Lesson.objects.get(title=lesson_name)
+    course, module, lesson = _get_course_module_lesson(
+        course_slug, module_slug, lesson_slug
+    )
+    if not course.has_access(request.user):
+        messages.error(request, 'Сначала запишитесь на курс.')
+        return redirect('lesson:course_detail', course_slug=course.slug)
     try:
         les = UserLessonProgress.objects.get(
             user=request.user,
@@ -291,12 +496,14 @@ def lesson_detail(request, course_name, module_name, lesson_name):
         if not (les.completed or les.current):
             return redirect(
                 "lesson:module_detail",
-                course_name, module_name
+                course_slug=course.slug,
+                module_slug=module.slug,
             )
     except Exception:
         return redirect(
             "lesson:module_detail",
-            course_name, module_name
+            course_slug=course.slug,
+            module_slug=module.slug,
         )
     is_completed = UserLessonProgress.objects.get_or_create(
         user=request.user,
@@ -305,11 +512,11 @@ def lesson_detail(request, course_name, module_name, lesson_name):
         lesson=lesson
     )[0].completed
     context = {
-        'course_name': course_name,
-        'module_name': module_name,
-        'lesson_title': lesson_name,
+        'course': course,
+        'module': module,
         'lesson': lesson,
         "is_completed": is_completed,
+        "practice_count": lesson.practice_tasks.count(),
     }
     return render(
         request,
@@ -319,26 +526,28 @@ def lesson_detail(request, course_name, module_name, lesson_name):
 
 
 @login_required
-def module_detail(request, course_name, module_name):
+def module_detail(request, course_slug, module_slug):
     """
     Получение уроков в модуле. Открытие первого урока если модуль новый
     """
-    course = Course.objects.get(name=course_name)
-    module = Module.objects.get(title=module_name)
-    
+    course, module = _get_course_module(course_slug, module_slug)
+    if not course.has_access(request.user):
+        messages.error(request, 'Сначала запишитесь на курс.')
+        return redirect('lesson:course_detail', course_slug=course.slug)
+
     # Проверка доступности модуля
-    course_modules_list = list(course.modules.all())
+    course_modules_list = list(course.ordered_modules())
     try:
         module_index = course_modules_list.index(module)
     except ValueError:
         # Модуль не найден в курсе - редирект на курс
-        return redirect('lesson:course_detail', course_name=course_name)
+        return redirect('lesson:course_detail', course_slug=course.slug)
     
     # Первый модуль всегда доступен
     if module_index > 0:
         # Проверяем, пройден ли предыдущий модуль полностью
         prev_module = course_modules_list[module_index - 1]
-        prev_module_lessons = prev_module.lessons.all()
+        prev_module_lessons = prev_module.ordered_lessons()
         prev_completed_lessons = UserLessonProgress.objects.filter(
             user=request.user,
             course=course,
@@ -359,9 +568,9 @@ def module_detail(request, course_name, module_name):
             
             if not has_current_lesson:
                 # Модуль заблокирован - редирект на курс
-                return redirect('lesson:course_detail', course_name=course_name)
+                return redirect('lesson:course_detail', course_slug=course.slug)
     
-    lessons_module = module.lessons.all()
+    lessons_module = module.ordered_lessons()
 
     # Если в модуле не открыт первый урок, назначаем его текущим
     # if module.lessons.all()[0].id not in UserLessonProgress.objects.filter(
@@ -401,28 +610,35 @@ def module_detail(request, course_name, module_name):
 
     context = {
         'lessons': lessons,
-        'course_name': course_name,
-        'module_name': module_name
+        'course': course,
+        'module': module,
     }
     return render(request, 'lesson/module_detail.html', context)
 
 
 @login_required
-def complete_lesson(request, course_name, module_name, lesson_name):
+def complete_lesson(request, course_slug, module_slug, lesson_slug):
     """
     Отметка урока как пройденного и открытие следующего урока.
-    Логика:
-    1. Отмечаем текущий урок как завершенный
-    2. Убираем флаг current у всех уроков этого пользователя в этом курсе
-    3. Открываем следующий урок:
-       - Если есть следующий урок в модуле - открываем его
-       - Если это последний урок в модуле - открываем первый урок следующего модуля
-       - Если это последний урок в последнем модуле - курс завершен
     """
-    course = Course.objects.get(name=course_name)
-    module = Module.objects.get(title=module_name)
-    lesson = Lesson.objects.get(title=lesson_name)
-    
+    course, module, lesson = _get_course_module_lesson(
+        course_slug, module_slug, lesson_slug
+    )
+    if not course.has_access(request.user):
+        messages.error(request, 'Сначала запишитесь на курс.')
+        return redirect('lesson:course_detail', course_slug=course.slug)
+
+    # Бесплатный курс попадает в «проходимые» при прохождении первого урока.
+    if course.is_free:
+        CourseEnrollment.objects.get_or_create(
+            user=request.user,
+            course=course,
+            defaults={
+                'status': CourseEnrollment.Status.APPROVED,
+                'decided_at': timezone.now(),
+            },
+        )
+
     # 1. Отметить текущий урок как завершённый
     progress, created = UserLessonProgress.objects.get_or_create(
         user=request.user,
@@ -441,8 +657,8 @@ def complete_lesson(request, course_name, module_name, lesson_name):
     ).update(current=False)
     
     # 3. Найти следующий урок
-    module_lessons = list(module.lessons.all())
-    course_modules = list(course.modules.all())
+    module_lessons = list(module.ordered_lessons())
+    course_modules = list(course.ordered_modules())
     
     # Получаем индекс текущего урока в модуле
     try:
@@ -451,8 +667,8 @@ def complete_lesson(request, course_name, module_name, lesson_name):
         # Если урока нет в списке, редиректим на модуль
         return redirect(
             'lesson:module_detail',
-            course_name=course_name,
-            module_name=module_name
+            course_slug=course.slug,
+            module_slug=module.slug,
         )
     
     next_module = None
@@ -470,7 +686,7 @@ def complete_lesson(request, course_name, module_name, lesson_name):
             if current_module_index + 1 < len(course_modules):
                 # Есть следующий модуль
                 next_module = course_modules[current_module_index + 1]
-                next_module_lessons = list(next_module.lessons.all())
+                next_module_lessons = list(next_module.ordered_lessons())
                 if next_module_lessons:
                     next_lesson = next_module_lessons[0]
         except ValueError:
@@ -486,68 +702,97 @@ def complete_lesson(request, course_name, module_name, lesson_name):
         )
         next_progress.current = True
         next_progress.save()
-        
-        # Редирект на модуль следующего урока
+
+        # Следующий урок уже открыт (current=True). Возвращаем пользователя
+        # к текущему модулю, чтобы он увидел отметку о прохождении и открытый
+        # следующий шаг, а не «выбрасывался» в другой модуль.
         return redirect(
             'lesson:module_detail',
-            course_name=course_name,
-            module_name=next_module.title
+            course_slug=course.slug,
+            module_slug=module.slug,
         )
-    
-    # Курс завершен или следующий урок не найден - остаемся в текущем модуле
+
+    if _course_is_fully_completed(request.user, course):
+        request.session[_course_celebration_key(course.pk)] = True
+        messages.success(
+            request,
+            f'Поздравляем! Курс «{course.name}» пройден полностью!',
+        )
+        return redirect('lesson:course_detail', course_slug=course.slug)
+
+    # Курс не завершён — остаёмся в текущем модуле
     return redirect(
         'lesson:module_detail',
-        course_name=course_name,
-        module_name=module_name
+        course_slug=course.slug,
+        module_slug=module.slug,
     )
 
 
 @login_required
 def profile(request):
-    """
-    Профиль пользователя. Отображение роли, проходимый и преподаваемых курсов
-    """
-    # queryset = RegisterCourse.objects.filter(user=request.user)
+    """Личный кабинет PyDep: роль, прогресс по курсам, быстрые действия."""
     user = request.user
-    result = ''
+
+    roles = []
     if user.is_superuser:
-        result += 'Модератор '
+        roles.append('Модератор')
     if user.is_teacher:
-        result += 'Преподаватель '
+        roles.append('Преподаватель')
     if user.is_student:
-        result += 'Студент '
-    is_teacher = user.is_teacher
-    is_student = user.is_student
-    result = result.strip()
-    result = result.replace(' ', ' & ')
-    # learn_courses = user.courses_learn.all()
-    # teach_courses = user.courses_teach.all()
-    cancelled_lesson = CancelledLesson.objects.filter(student=request.user)
-    cancelled = [elem.date_cancelled.day for elem in cancelled_lesson]
+        roles.append('Студент')
+    result = ' & '.join(roles)
 
-    lessons_time = Schedule.objects.filter(student=request.user)
-    weekdays = [elem.weekday for elem in lessons_time]
-
-    current_year = datetime.today().year
-    current_month = datetime.today().month
-
-    month_matrix = calendar.monthcalendar(current_year, current_month)
+    # Курсы, на которые записан пользователь, с прогрессом прохождения.
+    enrollments = (
+        CourseEnrollment.objects
+        .filter(user=user, status=CourseEnrollment.Status.APPROVED)
+        .select_related('course')
+    )
+    # Заявки, ожидающие одобрения админом.
+    pending_enrollments = (
+        CourseEnrollment.objects
+        .filter(user=user, status=CourseEnrollment.Status.PENDING)
+        .select_related('course')
+    )
+    courses_progress = []
+    total_done = 0
+    total_lessons = 0
+    for enrollment in enrollments:
+        course = enrollment.course
+        module_ids = ModulesInCourse.objects.filter(
+            course=course
+        ).values_list('module_id', flat=True)
+        lessons_count = LessonsInModule.objects.filter(
+            module_id__in=module_ids
+        ).count()
+        done = UserLessonProgress.objects.filter(
+            user=user, course=course, completed=True
+        ).count()
+        pct = round(done / lessons_count * 100) if lessons_count else 0
+        total_done += done
+        total_lessons += lessons_count
+        courses_progress.append({
+            'course': course,
+            'total': lessons_count,
+            'done': done,
+            'pct': pct,
+            'completed': lessons_count and done >= lessons_count,
+        })
 
     context = {
-        # 'learn_courses': learn_courses,
-        # 'teach_courses': teach_courses,
         'result': result,
         'user': user,
-        'is_teacher': is_teacher,
-        'is_student': is_student,
+        'is_teacher': user.is_teacher,
+        'is_student': user.is_student,
         'is_tutor_student': user.is_tutor_student,
-        # 'queryset': queryset,
-        'month_matrix': month_matrix,
-        'current_day': datetime.today().day,
-        'weekdays': weekdays,
-        'cancelled': cancelled,
+        'courses_progress': courses_progress,
+        'pending_enrollments': pending_enrollments,
+        'courses_count': len(courses_progress),
+        'completed_courses': sum(1 for c in courses_progress if c['completed']),
+        'overall_pct': (
+            round(total_done / total_lessons * 100) if total_lessons else 0
+        ),
     }
-
     return render(request, 'lesson/profile.html', context)
 
 
@@ -680,3 +925,52 @@ def profile_edit(request):
 
 def course_editor(request):
     pass
+
+
+@login_required
+def enrollment_requests(request):
+    """Модерация заявок на курсы (для персонала).
+
+    Точка будущего эквайринга: одобрение здесь заменится подтверждением
+    оплаты, но статусная модель и интерфейс остаются теми же.
+    """
+    if not request.user.is_staff:
+        raise PermissionDenied
+    pending = (
+        CourseEnrollment.objects
+        .filter(status=CourseEnrollment.Status.PENDING)
+        .select_related('course', 'user')
+        .order_by('enrolled_at')
+    )
+    decided = (
+        CourseEnrollment.objects
+        .exclude(status=CourseEnrollment.Status.PENDING)
+        .select_related('course', 'user', 'decided_by')
+        .order_by('-decided_at')[:25]
+    )
+    return render(
+        request,
+        'lesson/enrollment_requests.html',
+        {'pending': pending, 'decided': decided},
+    )
+
+
+@login_required
+def enrollment_decide(request, pk, decision):
+    if not request.user.is_staff:
+        raise PermissionDenied
+    enrollment = get_object_or_404(CourseEnrollment, pk=pk)
+    if request.method == 'POST':
+        if decision == 'approve':
+            enrollment.approve(by=request.user)
+            student = (
+                enrollment.user.get_full_name() or enrollment.user.username
+            )
+            messages.success(
+                request,
+                f'Курс «{enrollment.course}» открыт для {student}.'
+            )
+        elif decision == 'reject':
+            enrollment.reject(by=request.user)
+            messages.info(request, 'Заявка отклонена.')
+    return redirect('lesson:enrollment_requests')

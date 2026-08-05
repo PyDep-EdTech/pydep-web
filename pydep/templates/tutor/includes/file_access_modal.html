@@ -1,0 +1,40 @@
+<div class="modal fade" id="fileAccessModal" tabindex="-1" aria-labelledby="fileAccessModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+    <div class="modal-content file-access-modal">
+      <div class="modal-header">
+        <div>
+          <h5 class="modal-title" id="fileAccessModalLabel">
+            <i class="bi bi-shield-lock me-2"></i>Доступ к файлу
+          </h5>
+          <div class="file-access-modal__subtitle text-muted small" id="fileAccessModalSubtitle"></div>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3" id="fileAccessGroupWrap">
+          <label class="form-label" for="fileAccessGroup">Группа доступа</label>
+          <select class="form-select" id="fileAccessGroup"></select>
+          <div class="form-text">Базовый уровень видимости файла.</div>
+        </div>
+
+        <div class="mb-2 d-flex align-items-center justify-content-between gap-2">
+          <label class="form-label mb-0" for="fileAccessSearch">Доп. пользователи</label>
+          <span class="file-access-modal__count text-muted small" id="fileAccessSelectedCount"></span>
+        </div>
+        <p class="form-text mt-0 mb-2">Выбранные пользователи увидят файл независимо от группы.</p>
+
+        <div class="file-access-chips mb-3" id="fileAccessChips"></div>
+
+        <div class="student-picker-search-wrap mb-3">
+          <i class="bi bi-search"></i>
+          <input type="search" class="form-control" id="fileAccessSearch" placeholder="Поиск по имени или логину…" autocomplete="off">
+        </div>
+        <div class="student-picker-grid" id="fileAccessGrid"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" data-bs-dismiss="modal">Отмена</button>
+        <button type="button" class="btn btn-primary" id="fileAccessSaveBtn">Сохранить</button>
+      </div>
+    </div>
+  </div>
+</div>

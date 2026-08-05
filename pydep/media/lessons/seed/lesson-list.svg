@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 220" role="img" aria-label="!?8A>:">
+  <rect width="720" height="220" rx="16" fill="#1E1E21"/>
+  <text x="360" y="32" text-anchor="middle" fill="#F1EFEA" font-size="18" font-weight="700">!?8A>:  8=45:AK A =C;O</text>
+  <rect x="80" y="55" width="560" height="130" rx="10" fill="#26262A" stroke="#54D6B4" stroke-width="2"/>
+  <text x="120" y="85" fill="#67665F" font-size="11">[0]</text><text x="220" y="85" fill="#67665F" font-size="11">[1]</text><text x="320" y="85" fill="#67665F" font-size="11">[2]</text><text x="420" y="85" fill="#67665F" font-size="11">[3]</text>
+  <rect x="100" y="95" width="90" height="50" rx="6" fill="#306998"/><rect x="200" y="95" width="90" height="50" rx="6" fill="#FFB020"/><rect x="300" y="95" width="90" height="50" rx="6" fill="#9B59B6"/><rect x="400" y="95" width="90" height="50" rx="6" fill="#54D6B4"/>
+  <text x="145" y="127" text-anchor="middle" fill="#fff" font-size="12">O1;>:></text>
+  <text x="245" y="127" text-anchor="middle" fill="#1A1407" font-size="12">3@CH0</text>
+  <text x="345" y="127" text-anchor="middle" fill="#fff" font-size="12">10=0=</text>
+  <text x="445" y="127" text-anchor="middle" fill="#0f1f1a" font-size="12">:828</text>
+  <text x="360" y="200" text-anchor="middle" fill="#989790" font-family="monospace" font-size="13">fruits[0] � 'O1;>:>'    fruits[-1] � ':828'</text>
+</svg>

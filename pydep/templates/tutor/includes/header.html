@@ -1,27 +1,45 @@
 {% load static %}
-{% with request.resolver_match.view_name as view_name %}
+{% with view_name=request.resolver_match.view_name %}
 <header>
-     <nav class="navbar navbar-expand-lg navbar-light bg-white py-3">
-                <div class="container px-5">
-                    <a class="navbar-brand" href={% url "tutor:my_tutor" %}><span class="fw-bolder text-danger">МойРепетитор</span></a>
-                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
-                    <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                        <ul class="navbar-nav ms-auto mb-2 mb-lg-0 small fw-bolder">
-                            <li class="nav-item"><a class="nav-link {% if view_name  == 'lesson:index' %}active{% endif %}" href={% url "lesson:index" %}>PyDep</a></li>
-                        <li class="nav-item"><a class="nav-link {% if view_name  == 'tutor:projectbox' %}active{% endif %}" href={% url "tutor:projectbox" %}>ProjectBox</a></li>
-                        <li class="nav-item"><a class="nav-link {% if view_name  == 'tutor:schedule' %}active{% endif %}" href={% url "tutor:schedule" %}>Расписание</a></li>
-                            {% if user.is_authenticated %}
-                            <li class="nav-item"><a class="nav-link {% if view_name  == 'tutor:profile' %}active{% endif %}" href={% url "tutor:profile" %}>Профиль</a></li>
-
-
-                            {% else %}
-                                <li class="nav-item"><a class="nav-link {% if view_name  == 'users:signup' %}active{% endif %}" href={% url "users:signin" %}>Вход</a></li>
-                                <li class="nav-item"><a class="nav-link {% if view_name  == 'users:signin' %}active{% endif %}" href={% url "users:signup" %}>Регистрация</a></li>
-                            {% endif %}
-
-                        </ul>
-                    </div>
+    <nav class="navbar navbar-expand-lg py-3">
+        <div class="container">
+            <div class="navbar-bar">
+                <a class="navbar-brand" href="{% if user.is_authenticated %}{% url 'tutor:dashboard' %}{% else %}{% url 'tutor:my_tutor' %}{% endif %}">
+                    <span class="brand-dot">{% include 'includes/platform_icon.html' with platform='tutor' size=30 %}</span>
+                    <span class="brand-text">Репетитор</span>
+                </a>
+                <div class="navbar-bar__actions d-lg-none">
+                    {% include "includes/theme_toggle.html" with bare=True %}
+                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Меню">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
                 </div>
-            </nav>
+            </div>
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav ms-lg-auto mb-2 mb-lg-0 align-items-lg-center gap-lg-1">
+                    {% if user.is_authenticated %}
+                    <li class="nav-item"><a class="nav-link {% if view_name == 'tutor:dashboard' %}active{% endif %}" href="{% url 'tutor:dashboard' %}">Обзор</a></li>
+                    <li class="nav-item"><a class="nav-link {% if view_name == 'tutor:schedule' %}active{% endif %}" href="{% url 'tutor:schedule' %}">Расписание</a></li>
+                    {% if user.is_teacher or user.is_tutor_admin or user.is_superuser %}
+                    <li class="nav-item"><a class="nav-link {% if view_name == 'tutor:students_manage' %}active{% endif %}" href="{% url 'tutor:students_manage' %}">Ученики</a></li>
+                    {% endif %}
+                    <li class="nav-item"><a class="nav-link {% if view_name == 'tutor:homework_list' or view_name == 'tutor:homework_detail' or view_name == 'tutor:homework_create' %}active{% endif %}" href="{% url 'tutor:homework_list' %}">Задания</a></li>
+                    <li class="nav-item"><a class="nav-link {% if view_name == 'tutor:finances' %}active{% endif %}" href="{% url 'tutor:finances' %}">Финансы</a></li>
+                    <li class="nav-item"><a class="nav-link {% if view_name == 'tutor:projectbox' %}active{% endif %}" href="{% url 'tutor:projectbox' %}">Файлы</a></li>
+                    <li class="nav-item"><a class="nav-link {% if view_name == 'tutor:profile' %}active{% endif %}" href="{% url 'tutor:profile' %}">Профиль</a></li>
+                    {% else %}
+                    <li class="nav-item"><a class="nav-link" href="{% url 'users:signin' %}?next={% url 'tutor:dashboard' %}">Вход</a></li>
+                    <li class="nav-item"><a class="btn btn-primary btn-sm px-3" href="{% url 'users:signup' %}?next={% url 'tutor:dashboard' %}">Регистрация</a></li>
+                    {% endif %}
+                    <li class="nav-item d-none d-lg-flex align-items-center">{% include "includes/theme_toggle.html" with bare=True %}</li>
+                    <li class="nav-item ms-lg-2">
+                        <a class="nav-link platform-switch" href="{% url 'lesson:index' %}" title="Перейти в PyDep">
+                            <span class="ps-mini">{% include 'includes/platform_icon.html' with platform='pydep' size=20 %}</span> PyDep <i class="bi bi-arrow-up-right ms-1" style="font-size:.75rem"></i>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
 </header>
 {% endwith %}

@@ -1,0 +1,199 @@
+{% extends 'course_editor/base_studio.html' %}
+{% load static %}
+
+{% block title %}{{ course.name }} — Студия{% endblock %}
+
+{% block studio_content %}
+<nav class="studio-breadcrumbs">
+    <a href="{% url 'studio:main' %}">Студия</a>
+    <span class="sep">/</span>
+    <a href="{% url 'studio:my_courses' %}">Мои курсы</a>
+    <span class="sep">/</span>
+    <span>{{ course.name }}</span>
+</nav>
+
+<div class="studio-page-head">
+    <div>
+        <h1>{{ course.name }}</h1>
+        <p>Управляйте структурой, настройками и публикацией</p>
+    </div>
+    <div class="studio-actions">
+        <span class="status-badge {% if course.is_published %}status-published{% else %}status-draft{% endif %}">
+            {% if course.is_published %}<i class="bi bi-check-circle-fill me-1"></i>Опубликован{% else %}<i class="bi bi-eye-slash-fill me-1"></i>Черновик{% endif %}
+        </span>
+        <form method="post" class="d-inline">
+            {% csrf_token %}
+            <button type="submit" name="toggle_publish" class="btn-publish {% if course.is_published %}unpublish{% else %}publish{% endif %}">
+                {% if course.is_published %}<i class="bi bi-eye-slash"></i> Скрыть{% else %}<i class="bi bi-eye"></i> Опубликовать{% endif %}
+            </button>
+        </form>
+        <a href="{% url 'lesson:course_detail' course.slug %}" class="btn btn-ghost btn-sm" target="_blank" rel="noopener">
+            <i class="bi bi-box-arrow-up-right"></i> Предпросмотр
+        </a>
+    </div>
+</div>
+
+<div class="studio-metrics">
+    <div class="studio-metric">
+        <div class="v">{{ stats.module_count }}</div>
+        <div class="l">Модулей</div>
+    </div>
+    <div class="studio-metric">
+        <div class="v">{{ stats.lesson_count }}</div>
+        <div class="l">Уроков</div>
+    </div>
+    <div class="studio-metric">
+        <div class="v">{% if course.is_free %}Бесплатно{% else %}{{ course.price }} ₽{% endif %}</div>
+        <div class="l">Стоимость</div>
+    </div>
+</div>
+
+<form method="post" enctype="multipart/form-data" id="course-form">
+    {% csrf_token %}
+    {% include 'course_editor/includes/studio_form_errors.html' %}
+
+    <div class="studio-panel">
+        <div class="studio-panel__title">
+            <h2><i class="bi bi-diagram-3 me-2"></i>Структура курса</h2>
+            <div class="d-flex gap-2 flex-wrap">
+                {% if available_modules %}
+                <button type="button" class="btn btn-ghost btn-sm" id="attachModuleTrigger">
+                    <i class="bi bi-folder-symlink"></i> Добавить существующий
+                </button>
+                {% endif %}
+                <a href="{% url 'studio:module_create' course.id %}" class="btn btn-primary btn-sm">
+                    <i class="bi bi-folder-plus"></i> Новый модуль
+                </a>
+            </div>
+        </div>
+
+        <input type="hidden" name="modules_order" id="modules_order" value="">
+
+        {% if course_tree %}
+        <div class="studio-sortable" id="studio-modules-sortable"
+             data-reorder-url="{% url 'studio:reorder' %}"
+             data-course-id="{{ course.id }}">
+            {% for item in course_tree %}
+            <div class="studio-sortable__item" data-id="{{ item.module.id }}">
+                <span class="studio-sortable__handle"><i class="bi bi-grip-vertical"></i></span>
+                <div class="studio-sortable__body">
+                    <div class="studio-sortable__title">{{ item.module.title }}</div>
+                    <div class="studio-sortable__meta">{{ item.lesson_count }} урок(ов)</div>
+                </div>
+                <div class="studio-sortable__actions">
+                    <a href="{% url 'studio:module_edit' course.id item.module.id %}" class="btn btn-ghost btn-sm" title="Редактировать">
+                        <i class="bi bi-pencil"></i>
+                    </a>
+                    <button type="button"
+                            class="btn btn-ghost btn-sm text-danger studio-detach-btn"
+                            title="Открепить"
+                            data-detach-form="studio-detach-module-form"
+                            data-detach-id="{{ item.module.id }}"
+                            data-confirm="Открепить модуль от курса?">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <p class="studio-save-hint"><i class="bi bi-arrows-move me-1"></i>Перетащите модули для изменения порядка</p>
+        {% else %}
+        <div class="studio-sortable__empty">
+            <i class="bi bi-folder2-open d-block mb-2" style="font-size:1.8rem;color:var(--brand);"></i>
+            Курс пока без модулей.<br>
+            <a href="{% url 'studio:module_create' course.id %}" class="btn btn-primary btn-sm mt-3">Создать первый модуль</a>
+        </div>
+        {% endif %}
+
+    </div>
+
+    <div class="studio-panel">
+        <div class="studio-panel__title">
+            <h2><i class="bi bi-gear me-2"></i>Настройки курса</h2>
+        </div>
+        <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Название</label>
+                    {{ form.name }}
+                    {% if form.name.errors %}<div class="text-danger small">{{ form.name.errors|join:", " }}</div>{% endif %}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Категория</label>
+                    {{ form.category }}
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Описание</label>
+                    {{ form.description }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Стоимость, ₽</label>
+                    {{ form.price }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Длительность (мес.)</label>
+                    {{ form.duration }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Уровень</label>
+                    {{ form.level }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Язык / стек</label>
+                    {{ form.programming_language }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Обложка</label>
+                    {{ form.image }}
+                </div>
+            </div>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <a href="{% url 'studio:my_courses' %}" class="btn btn-ghost">К списку курсов</a>
+        <button type="submit" class="btn btn-primary btn-lg">
+            <i class="bi bi-check-lg me-1"></i> Сохранить курс
+        </button>
+    </div>
+</form>
+
+<form method="post" id="studio-detach-module-form" class="d-none">
+    {% csrf_token %}
+    <input type="hidden" name="detach_module" value="1">
+    <input type="hidden" name="module_id" id="studio-detach-module-id" value="">
+</form>
+
+{% if available_modules %}
+{{ available_modules_data|json_script:"studio-modules-data" }}
+{% include 'course_editor/includes/studio_attach_modal.html' with modal_id='attachModuleModal' modal_title='Добавить модуль в курс' modal_icon='bi-folder2' search_id='attachModuleSearch' grid_id='attachModuleGrid' form_id='attach-module-form' id_input_id='attachModuleId' attach_field='attach_module' id_field='module_id' search_placeholder='Поиск по названию модуля…' %}
+{% endif %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var input = document.getElementById('modules_order');
+    if (input) {
+        var ids = [{% for item in course_tree %}{{ item.module.id }}{% if not forloop.last %}, {% endif %}{% endfor %}];
+        input.value = ids.join(',');
+    }
+});
+</script>
+
+{% if available_modules %}
+<script src="{% static 'js/studio-attach-picker.js' %}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var dataEl = document.getElementById('studio-modules-data');
+    if (!dataEl || !window.PyDepStudioAttachPicker) return;
+    PyDepStudioAttachPicker.init({
+        modalId: 'attachModuleModal',
+        gridId: 'attachModuleGrid',
+        searchId: 'attachModuleSearch',
+        formId: 'attach-module-form',
+        idInputId: 'attachModuleId',
+        triggerId: 'attachModuleTrigger',
+        items: JSON.parse(dataEl.textContent),
+        iconClass: 'bi-folder2',
+    });
+});
+</script>
+{% endif %}
+{% endblock %}

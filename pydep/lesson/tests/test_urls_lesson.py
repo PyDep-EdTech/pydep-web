@@ -25,6 +25,7 @@ def course():
         image="test/test.jpg",
         programming_language="Python",
         category=category,
+        price=0,
     )
     course.modules.add(module)
     course.save()
@@ -42,6 +43,7 @@ def user():
 class TestUrls:
     urls_status = {
         reverse("lesson:index"): (200, 200),
+        reverse("lesson:python_playground"): (200, 200),
         reverse("lesson:profile"): (302, 200),
         reverse("lesson:profile_edit"): (302, 200),
         reverse("lesson:courses"): (200, 200),
@@ -68,7 +70,7 @@ class TestUrls:
     def test_param_urls_none_auth(self, client, course):
         url = reverse(
             "lesson:course_detail",
-            kwargs={"course_name": course.name}
+            kwargs={"course_slug": course.slug}
         )
         resp = client.get(url, follow=False)
         assert resp.status_code in (301, 302)
@@ -78,9 +80,11 @@ class TestUrls:
         url = reverse("lesson:category", kwargs={"slug": course.category.slug})
         assert client.get(url).status_code == 200
 
+        mod = course.modules.first()
+        les = mod.lessons.first()
         url = reverse("lesson:module_detail", kwargs={
-            "course_name": course.name,
-            "module_name": course.modules.first().title,
+            "course_slug": course.slug,
+            "module_slug": mod.slug,
         })
         resp = client.get(url, follow=False)
         assert resp.status_code in (301, 302)
@@ -88,9 +92,9 @@ class TestUrls:
         assert login_url in resp.url
 
         url = reverse("lesson:lesson_detail", kwargs={
-            "course_name": course.name,
-            "module_name": course.modules.first().title,
-            "lesson_name": course.modules.first().lessons.first().title,
+            "course_slug": course.slug,
+            "module_slug": mod.slug,
+            "lesson_slug": les.slug,
         })
         resp = client.get(url, follow=False)
         assert resp.status_code in (301, 302)
@@ -103,22 +107,24 @@ class TestUrls:
 
         url = reverse(
             "lesson:course_detail",
-            kwargs={"course_name": course.name}
+            kwargs={"course_slug": course.slug}
         )
         assert client.get(url).status_code == 200
 
         url = reverse("lesson:category", kwargs={"slug": course.category.slug})
         assert client.get(url).status_code == 200
 
+        mod = course.modules.first()
+        les = mod.lessons.first()
         url = reverse("lesson:module_detail", kwargs={
-            "course_name": course.name,
-            "module_name": course.modules.first().title,
+            "course_slug": course.slug,
+            "module_slug": mod.slug,
         })
         assert client.get(url).status_code == 200
 
         url = reverse("lesson:lesson_detail", kwargs={
-            "course_name": course.name,
-            "module_name": course.modules.first().title,
-            "lesson_name": course.modules.first().lessons.first().title,
+            "course_slug": course.slug,
+            "module_slug": mod.slug,
+            "lesson_slug": les.slug,
         })
         assert client.get(url).status_code == 200

@@ -205,10 +205,6 @@ class Command(BaseCommand):
                 category=category,
                 programming_language=language,
             )
-            # Обход бага: в модели используется self.slug
-            # без поля — выставляем атрибут, чтобы save() не упал
-            course.slug = name
-            # Идемпотентность по уникальному name
             existing = Course.objects.filter(name=name).first()
             if existing:
                 course = existing

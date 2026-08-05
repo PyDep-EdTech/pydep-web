@@ -1,3 +1,38 @@
-<footer class="border-top text-center py-3">
-  <p>© {{ year }} Copyright <span style="color:red">Py</span>Dep</p>
+<footer class="site-footer">
+    <div class="container py-5">
+        <div class="row gy-4 align-items-start">
+            <div class="col-lg-5">
+                <a class="navbar-brand mb-3 d-inline-flex" href="/">
+                    <span class="brand-dot">{% include 'includes/platform_icon.html' with platform='pydep' size=30 %}</span>
+                    <span class="brand-text">PyDep</span>
+                </a>
+                <p class="text-muted mb-0" style="max-width: 360px;">
+                    Современная образовательная платформа. Осваивай Python, Django, SQL
+                    и веб-разработку с поддержкой наставников и практикой на реальных проектах.
+                </p>
+            </div>
+            <div class="col-6 col-lg-3">
+                <h6 class="text-uppercase small fw-bold mb-3" style="color: var(--text-dim); letter-spacing: .08em;">Навигация</h6>
+                <ul class="list-unstyled d-flex flex-column gap-2 mb-0">
+                    <li><a class="text-muted" href="/courses/">Курсы</a></li>
+                    <li><a class="text-muted" href="/tutor/">Мой репетитор</a></li>
+                    <li><a class="text-muted" href="/profile/">Профиль</a></li>
+                </ul>
+            </div>
+            <div class="col-6 col-lg-4">
+                <h6 class="text-uppercase small fw-bold mb-3" style="color: var(--text-dim); letter-spacing: .08em;">Стек</h6>
+                <div class="d-flex flex-wrap gap-2">
+                    <span class="chip">Python</span>
+                    <span class="chip">Django</span>
+                    <span class="chip">SQL</span>
+                    <span class="chip">Web</span>
+                </div>
+            </div>
+        </div>
+        <hr class="my-4">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-2">
+            <p class="mb-0 small text-muted">© {% now "Y" %} <span class="text-gradient fw-bold">PyDep</span>. Все права защищены.</p>
+            <p class="mb-0 small text-muted">Сделано с ❤️ для будущих разработчиков</p>
+        </div>
+    </div>
 </footer>

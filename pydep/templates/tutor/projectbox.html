@@ -1,230 +1,253 @@
 {% extends 'tutor/base.html' %}
 {% load static %}
 
-{% block title %}ProjectBox{% endblock %}
+{% block title %}Файлы — Мой репетитор{% endblock %}
 
 {% block static %}
-    <style>
-    .hero {
-        min-height: 90vh;
-        {#background: linear-gradient(120deg, #f0f4ff, #e6eaff);#}
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 60px 20px;
-        text-align: center;
+<style>
+    .file-list-item {
+        width: 100%;
+        text-align: left;
+        border-radius: 12px !important;
+        margin-bottom: 6px;
+        border: 1px solid var(--border);
+        background: rgba(255,255,255,.02);
+        color: var(--text);
+        cursor: pointer;
+        transition: background .15s, border-color .15s;
     }
-    .hero h1 {
-        font-size: 3rem;
-        font-weight: 800;
-        line-height: 1.2;
-        background: linear-gradient(90deg, #ff3b30, #601c14);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        margin-bottom: 20px;
-        animation: fadeInDown 1s ease both;
+    .file-list-item:hover,
+    .file-list-item.active {
+        background: var(--surface-2);
+        border-color: var(--brand);
+        color: var(--text);
     }
-    .hero p {
-        font-size: 1.25rem;
-        color: #555;
-        max-width: 700px;
-        margin: 0 auto 30px;
-        animation: fadeInUp 1.2s ease both;
-    }
-    .hero-buttons a {
-        padding: 12px 30px;
+    .file-list-item__name {
         font-weight: 600;
+        color: var(--heading);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .file-access-badge {
+        font-size: .68rem;
+        font-weight: 700;
+        padding: 2px 8px;
+        border-radius: 999px;
+        background: rgba(255, 176, 32,.15);
+        color: #c9bcff;
+        white-space: nowrap;
+    }
+    .file-upload-card {
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        background: var(--surface);
+        padding: 1.15rem 1.25rem;
+        margin-bottom: 1.25rem;
+    }
+    .file-upload-card h2 {
+        font-size: .95rem;
+        font-weight: 700;
+        color: var(--heading);
+        margin: 0 0 .85rem;
+    }
+    .file-preview-card {
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        background: var(--surface);
+        min-height: 360px;
+    }
+    .file-preview-card .card-body { padding: 1.15rem 1.25rem; }
+    .file-preview-head { margin-bottom: .75rem; color: var(--heading); }
+    .file-preview-actions { margin-bottom: 1rem; }
+    .file-preview-code {
+        background: var(--surface-solid) !important;
+        color: var(--text) !important;
+        border: 1px solid var(--border) !important;
         border-radius: 12px;
+        padding: 1rem;
+        max-height: 420px;
+        overflow: auto;
+        white-space: pre-wrap;
+        font-size: .85rem;
+        margin: 0;
+    }
+    .file-preview-empty { padding: 2rem 0; text-align: center; }
+    .file-preview-hint { font-size: .88rem; line-height: 1.5; }
+    .file-access-trigger {
+        display: inline-flex;
+        align-items: center;
+        gap: .35rem;
+        border: 1px dashed var(--border);
+        border-radius: 10px;
+        padding: .45rem .75rem;
+        background: rgba(255,255,255,.02);
+        color: var(--text);
+        font-size: .85rem;
+        cursor: pointer;
+        transition: border-color .15s, background .15s;
+    }
+    .file-access-trigger:hover {
+        border-color: var(--brand);
+        background: rgba(255, 176, 32,.08);
+    }
+    .file-access-modal__subtitle { margin-top: .15rem; }
+    .file-access-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .4rem;
+        min-height: 1.75rem;
+    }
+    .file-access-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: .25rem;
+        padding: .2rem .45rem .2rem .6rem;
+        border-radius: 999px;
+        background: rgba(255, 176, 32,.18);
+        color: #e8e4ff;
+        font-size: .78rem;
+        font-weight: 600;
+    }
+    .file-access-chip__remove {
+        border: 0;
+        background: transparent;
+        color: inherit;
+        opacity: .75;
+        padding: 0 .15rem;
+        line-height: 1;
+    }
+    .file-access-chip__remove:hover { opacity: 1; }
+    .student-picker-card--selected {
+        border-color: var(--brand) !important;
+        background: rgba(255, 176, 32,.12) !important;
+    }
+    .student-picker-card__check {
+        position: absolute;
+        top: .45rem;
+        right: .45rem;
+        color: var(--brand);
         font-size: 1rem;
-        margin: 0 10px;
-        transition: 0.3s ease;
     }
-    .hero-buttons .btn-primary {
-        background: #ff3b30;
-        color: white;
-    }
-    .hero-buttons .btn-outline-dark {
-        border: 2px solid #333;
-        color: #333;
-    }
-    .hero-buttons .btn-primary:hover {
-        background: #c83127;
-    }
-    .hero-buttons .btn-outline-dark:hover {
-        background: #333;
-        color: #fff;
-    }
-    .features {
-        background: #fff;
-        padding: 60px 20px;
-    }
-    .feature-icon {
-        font-size: 3rem;
-        color: #ff3b30;
-        margin-bottom: 15px;
-    }
-    @keyframes fadeInDown {
-        from { opacity: 0; transform: translateY(-30px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes fadeInUp {
-        from { opacity: 0; transform: translateY(30px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    .file-list-item { border-radius: 12px; }
-    .preview-area { min-height: 320px; }
-
-    /* Акцент выбранного файла — красный в палитре tutor */
-    .list-group-item.active {
-        background-color: #ff3b30;
-        border-color: #ff3b30;
-        color: #fff;
-    }
-    .list-group-item.active .text-muted { color: rgba(255,255,255,.85) !important; }
-    .file-list-item { transition: background-color .2s ease, border-color .2s ease; }
-    {#.file-list-item:hover { background-color: #fff5f4; border-color: #ffd0cc; }#}
-    </style>
+    .student-picker-card { position: relative; }
+</style>
 {% endblock %}
 
 {% block content %}
-    <div class="container py-5">
-<div class="container-fluid py-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h1 class="fw-bold mb-1">Файлы</h1>
-        <form id="uploadForm" method="post" action="" enctype="multipart/form-data" class="m-0">
-            {% csrf_token %}
-            <input type="file" id="fileInput" name="files" class="d-none" multiple>
-            <button type="button" id="uploadBtn" class="btn btn-primary" hidden="hidden">
-{#                <i class="bi bi-upload"></i>#}
-{#                Загрузить файлы#}
-            </button>
-        </form>
+<section class="py-5">
+  <div class="container tutor-page tutor-page--wide px-4 px-lg-3">
+    <div class="tutor-page-head">
+      <h1 class="fw-bold mb-1"><span class="text-gradient">ProjectBox</span></h1>
+      <p>Материалы проектов. Клик по файлу — только предпросмотр, скачивание — по кнопке.</p>
     </div>
 
-    <div class="row g-4">
+    {% if messages %}
+      {% for message in messages %}<div class="alert alert-{{ message.tags }}">{{ message }}</div>{% endfor %}
+    {% endif %}
+
+    {% if can_upload and form %}
+    <div class="file-upload-card">
+      <h2><i class="bi bi-cloud-upload me-1"></i> Добавить файл</h2>
+      <form method="post" enctype="multipart/form-data" class="row g-3">
+        {% csrf_token %}
         <div class="col-12 col-md-4">
-            <div class="list-group" id="fileList">
-                {% if files and files|length %}
-                    {% for f in files %}
-                        <a href="{{ f.file.url }}" class="list-group-item list-group-item-action file-list-item mb-2 file-item"
-                           data-name="{{ f.name|default:f.file.name }}"
-                           data-extname="{{ f.file.name }}"
-                           {% if f.file.size %}data-size="{{ f.file.size }}"{% endif %}
-                           data-url="{{ f.file.url }}">
-                            <div class="d-flex w-100 justify-content-between">
-                                <span class="text-truncate" style="max-width: 75%">{{ f.name|default:f.file.name }}</span>
-                                {% if f.file.size %}<small class="text-muted">{{ f.file.size|filesizeformat }}</small>{% endif %}
-                            </div>
-                        </a>
-                    {% endfor %}
-                {% else %}
-                    <div class="text-muted">Файлов пока нет</div>
-                {% endif %}
-            </div>
+          <label class="form-label" for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
+          {{ form.name }}
+          {% for e in form.name.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
         </div>
-        <div class="col-12 col-md-8">
-            <div class="card shadow-sm">
-                <div class="card-body preview-area" id="preview">
-                    <div class="text-muted">Выберите файл слева для предпросмотра</div>
-                </div>
-            </div>
+        <div class="col-12 col-md-4">
+          <label class="form-label" for="{{ form.file.id_for_label }}">{{ form.file.label }}</label>
+          {{ form.file }}
+          {% for e in form.file.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
         </div>
+        <div class="col-12 col-md-3">
+          <label class="form-label" for="{{ form.access_group.id_for_label }}">{{ form.access_group.label }}</label>
+          {{ form.access_group }}
+          {% for e in form.access_group.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+        </div>
+        <div class="col-12 col-md-3 d-flex flex-column justify-content-end">
+          <label class="form-label">Доп. пользователи</label>
+          <button type="button" class="file-access-trigger" id="uploadAccessBtn">
+            <i class="bi bi-people"></i>
+            <span id="uploadAccessSummary">Не выбраны</span>
+          </button>
+          <div id="uploadAllowedUsers"></div>
+        </div>
+        <div class="col-12 col-md-2 d-flex align-items-end">
+          <button type="submit" class="btn btn-primary w-100"><i class="bi bi-plus-lg me-1"></i>Загрузить</button>
+        </div>
+      </form>
+      {% if form.non_field_errors %}
+        <div class="alert alert-danger mt-3 mb-0">{{ form.non_field_errors }}</div>
+      {% endif %}
     </div>
-</div>
+    {% endif %}
+
+    <div class="row g-4">
+      <div class="col-12 col-md-4">
+        <div class="list-group border-0" id="fileList">
+          {% for f in files %}
+          <button type="button"
+                  class="list-group-item file-list-item"
+                  data-file-id="{{ f.pk }}"
+                  data-name="{{ f.name }}"
+                  data-extname="{{ f.file.name }}"
+                  data-url="{{ f.file.url }}"
+                  data-access-group="{{ f.get_access_group_display }}"
+                  data-extra-users="{{ f.allowed_users_count }}"
+                  {% if f.pk in manageable_ids %}data-can-manage="1"{% endif %}>
+            <div class="d-flex w-100 justify-content-between align-items-start gap-2">
+              <span class="file-list-item__name">{{ f.name }}</span>
+              <span class="file-access-badge">{{ f.get_access_group_display }}{% if f.allowed_users_count %} +{{ f.allowed_users_count }}{% endif %}</span>
+            </div>
+            {% if f.file.size %}<small class="text-muted">{{ f.file.size|filesizeformat }}</small>{% endif %}
+          </button>
+          {% empty %}
+          <div class="tutor-empty tutor-card" style="padding:1.5rem;">Файлов пока нет{% if can_upload %} — загрузите первый{% endif %}.</div>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="col-12 col-md-8">
+        <div class="file-preview-card card shadow-sm border-0">
+          <div class="card-body" id="filePreview">
+            <div class="file-preview-empty text-muted">Выберите файл слева для предпросмотра</div>
+          </div>
+        </div>
+      </div>
     </div>
- <script>
- (function() {
-     const uploadForm = document.getElementById('uploadForm');
-     const fileInput = document.getElementById('fileInput');
-     const uploadBtn = document.getElementById('uploadBtn');
-     const preview = document.getElementById('preview');
- 
-     uploadBtn.addEventListener('click', function() { fileInput.click(); });
-     fileInput.addEventListener('change', function() {
-         if (fileInput.files && fileInput.files.length) {
-             uploadForm.submit();
-         }
-     });
- 
-     function clearPreview() {
-         preview.innerHTML = '<div class="text-muted">Выберите файл слева для предпросмотра</div>';
-     }
- 
-     function guessTypeByName(name) {
-         const lower = (name || '').toLowerCase();
-         if (/\.(txt|md)$/.test(lower)) return 'text';
-         return 'other';
-     }
- 
-     function renderActions(url, displayName) {
-         const actions = document.createElement('div');
-         actions.className = 'mb-3';
-         const download = document.createElement('a');
-         download.href = url;
-         download.download = displayName || '';
-         download.className = 'btn btn-sm btn-outline-primary me-2';
-         download.textContent = 'Скачать';
-         actions.appendChild(download);
-         return actions;
-     }
- 
-     function showPreviewUrl(url, displayName, typeName) {
-         const type = guessTypeByName(typeName || displayName || url);
-         preview.innerHTML = '';
- 
-         const header = document.createElement('div');
-         header.className = 'mb-2';
-         header.innerHTML = `<strong>${displayName || 'Файл'}</strong>`;
-         preview.appendChild(header);
-         preview.appendChild(renderActions(url, displayName));
- 
-         if (type === 'text') {
-             fetch(url, { credentials: 'same-origin' })
-                 .then(r => r.ok ? r.text() : Promise.reject(new Error('HTTP ' + r.status)))
-                 .then(text => {
-                     const pre = document.createElement('pre');
-                     pre.className = 'bg-light p-3 rounded border';
-                     pre.style.whiteSpace = 'pre-wrap';
-                     pre.textContent = text;
-                     preview.appendChild(pre);
-                 })
-                 .catch(() => {
-                     const info = document.createElement('div');
-                     info.className = 'text-muted';
-                     info.textContent = 'Не удалось отобразить как текст. Откройте или скачайте файл.';
-                     preview.appendChild(info);
-                 });
-             return;
-         }
- 
-         const info = document.createElement('div');
-         info.className = 'text-muted';
-         info.textContent = 'Предпросмотр недоступен. Откройте или скачайте файл.';
-         const open = document.createElement('a');
-         open.href = url; open.target = '_blank';
-         open.className = 'btn btn-sm btn-outline-secondary ms-2';
-         open.textContent = 'Открыть в новой вкладке';
-         const actionsLast = preview.querySelector('div.mb-3');
-         actionsLast && actionsLast.appendChild(open);
-         preview.appendChild(info);
-     }
- 
-     document.querySelectorAll('.file-item').forEach(function(link, index) {
-         link.addEventListener('click', function(e) {
-             e.preventDefault();
-             document.querySelectorAll('#fileList .list-group-item').forEach(el => el.classList.remove('active'));
-             link.classList.add('active');
-             const url = link.getAttribute('data-url') || link.getAttribute('href');
-             const displayName = link.getAttribute('data-name') || '';
-             const typeName = link.getAttribute('data-extname') || displayName;
-             showPreviewUrl(url, displayName, typeName);
-         });
-         if (index === 0) {
-             setTimeout(() => link.click(), 0);
-         }
-     });
- 
-     if (!document.querySelector('.file-item')) { clearPreview(); }
- })();
- </script>
- {% endblock %}
+  </div>
+</section>
+
+{% if can_upload or manageable_ids %}
+{% include 'tutor/includes/file_access_modal.html' %}
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% if can_upload or manageable_ids %}
+<script src="{% static 'js/file-access-modal.js' %}"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const csrfInput = document.querySelector('[name=csrfmiddlewaretoken]');
+    window.pydepFileAccess = PyDepFileAccessModal.init({
+      users: {{ access_users_json|safe }},
+      accessGroups: {{ access_group_choices_json|safe }},
+      defaultAvatar: "{% static 'img/anonymous_user.png' %}",
+      csrfToken: csrfInput ? csrfInput.value : '',
+      getCsrf: function () {
+        const el = document.querySelector('[name=csrfmiddlewaretoken]');
+        return el ? el.value : '';
+      },
+      saveUrlTemplate: "{% url 'tutor:projectbox_file_access' 0 %}",
+      onSaved: function () {
+        const active = document.querySelector('.file-list-item.active');
+        if (active) {
+          active.click();
+        }
+      },
+    });
+  });
+</script>
+{% endif %}
+<script src="{% static 'js/projectbox.js' %}"></script>
+{% endblock %}

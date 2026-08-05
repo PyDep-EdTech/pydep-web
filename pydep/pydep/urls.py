@@ -7,10 +7,10 @@ from django.urls import include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('tutor/', include('tutor.urls', namespace='tutor')),
     path('', include('lesson.urls', namespace='lesson')),
     path("studio/", include("course_editor.urls", namespace="studio")),
     path('', include('users.urls', namespace='users')),
-    path('tutor/', include('tutor.urls', namespace='tutor')),
     path("api/", include("api.urls", namespace="api")),
 ]
 
@@ -21,3 +21,7 @@ urlpatterns += [
         name="ck_editor_5_upload_file"
     ),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+handler404 = 'lesson.views.page_not_found'
+handler500 = 'lesson.views.server_error'
+handler403 = 'lesson.views.permission_denied_page'

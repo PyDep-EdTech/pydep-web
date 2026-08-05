@@ -1,0 +1,94 @@
+{% if platform == "studio" %}
+<svg class="platform-logo platform-logo--studio{% if extra_class %} {{ extra_class }}{% endif %}"
+     viewBox="371.82 126.22 794.25 794.25" width="{{ size|default:30 }}" height="{{ size|default:30 }}"
+     preserveAspectRatio="xMidYMid meet"
+     aria-hidden="true">
+  <defs>
+    <linearGradient id="logo-grad-{{ id_prefix }}-studio" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFC24B"/>
+      <stop offset="55%" stop-color="#FFB020"/>
+      <stop offset="100%" stop-color="#FF9D2E"/>
+    </linearGradient>
+  </defs>
+  <g class="platform-logo__parts" transform="translate(0,1024) scale(0.1,-0.1)">
+    <g class="platform-logo__part platform-logo__part--frame" data-anim="rise" data-delay="0.04" data-dur="0.65" data-origin="center bottom">
+      <path fill="url(#logo-grad-{{ id_prefix }}-studio)" d="M 9370 8424 C 9370 8421 9362 8406 9351 8392 C 9341 8377 9190 8131 9015 7845 C 8840 7559 8656 7258 8605 7175 C 8414 6864 8151 6425 8151 6416 C 8150 6410 8427 6405 8837 6403 C 9216 6400 9528 6398 9531 6397 C 9535 6396 9416 6248 9266 6069 C 8885 5611 8607 5276 7841 4345 L 7380 3786 L 7380 3530 L 7380 3275 L 7142 3118 C 7011 3031 6902 2960 6899 2960 C 6896 2960 6893 3153 6892 3388 L 6890 3817 L 7150 4511 C 7293 4893 7423 5240 7439 5282 C 7455 5324 7465 5362 7462 5365 C 7459 5368 7116 5370 6699 5370 L 5941 5370 L 6002 5498 C 6035 5568 6139 5785 6233 5980 C 6326 6175 6489 6517 6595 6740 C 6854 7283 7129 7859 7281 8173 L 7405 8430 L 8387 8430 C 8928 8430 9370 8427 9370 8424 Z"/>
+    </g>
+    <g class="platform-logo__part platform-logo__part--panel-a" data-anim="drop-flip" data-delay="0.18" data-dur="0.7" data-origin="50% 0%">
+      <path fill="url(#logo-grad-{{ id_prefix }}-studio)" d="M 6515 4013 L 6270 3758 L 6489 3531 C 6609 3407 6720 3294 6734 3281 L 6760 3257 L 6760 3052 L 6760 2848 L 6800 2769 C 6840 2689 6850 2661 6827 2691 C 6820 2700 6606 2924 6350 3189 C 6021 3530 5881 3682 5871 3709 C 5844 3781 5857 3806 6008 3967 C 6083 4048 6267 4239 6415 4392 C 6564 4546 6701 4688 6720 4709 L 6755 4748 L 6758 4508 L 6760 4269 L 6515 4013 Z"/>
+    </g>
+    <g class="platform-logo__part platform-logo__part--panel-b" data-anim="fly-right" data-delay="0.34" data-dur="0.62" data-origin="center center">
+      <path fill="url(#logo-grad-{{ id_prefix }}-studio)" d="M 8949 4211 C 9204 3940 9331 3797 9335 3778 C 9350 3712 9345 3706 8846 3181 C 8582 2903 8298 2603 8216 2515 C 8134 2427 8052 2339 8033 2320 L 7999 2285 L 8014 2320 C 8022 2339 8083 2467 8149 2604 L 8270 2853 L 8270 2975 L 8270 3096 L 8585 3425 L 8899 3753 L 8862 3795 C 8842 3818 8700 3968 8547 4130 C 8394 4291 8271 4428 8274 4435 C 8279 4448 8434 4664 8458 4693 C 8477 4715 8439 4752 8949 4211 Z"/>
+    </g>
+    <g class="platform-logo__part platform-logo__part--accent" data-anim="fly-left" data-delay="0.46" data-dur="0.62" data-origin="center center">
+      <path fill="url(#logo-grad-{{ id_prefix }}-studio)" d="M 7630 3101 C 7721 3058 7870 2988 7962 2944 C 8054 2901 8129 2862 8130 2858 C 8130 2849 7945 2470 7697 1974 L 7502 1583 L 7352 1899 C 7269 2073 7135 2354 7054 2524 C 6939 2766 6910 2834 6921 2840 C 6929 2845 7050 2923 7190 3014 C 7330 3105 7450 3180 7455 3180 C 7461 3180 7539 3144 7630 3101 Z"/>
+    </g>
+    <g class="platform-logo__part platform-logo__part--spark" data-anim="spark" data-delay="0.6" data-dur="0.52" data-origin="center center">
+      <path fill="url(#logo-grad-{{ id_prefix }}-studio)" d="M 7383 2158 C 7343 2147 7310 2134 7310 2129 C 7310 2120 7453 1801 7486 1737 L 7506 1699 L 7610 1915 C 7667 2033 7711 2132 7708 2135 C 7696 2147 7542 2180 7501 2179 C 7476 2179 7422 2169 7383 2158 Z"/>
+    </g>
+  </g>
+</svg>
+{% elif platform == "tutor" %}
+<svg class="platform-logo platform-logo--tutor{% if extra_class %} {{ extra_class }}{% endif %}"
+     viewBox="350.84 93.09 833.11 833.11" width="{{ size|default:30 }}" height="{{ size|default:30 }}"
+     preserveAspectRatio="xMidYMid meet"
+     aria-hidden="true">
+  <defs>
+    <linearGradient id="logo-grad-{{ id_prefix }}-tutor" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFC24B"/>
+      <stop offset="55%" stop-color="#FFB020"/>
+      <stop offset="100%" stop-color="#FF9D2E"/>
+    </linearGradient>
+  </defs>
+  <g class="platform-logo__parts" transform="translate(0,1024) scale(0.1,-0.1)">
+    <g class="platform-logo__part platform-logo__part--figure" data-anim="rise" data-delay="0.04" data-dur="0.72" data-origin="center bottom">
+      <path fill="url(#logo-grad-{{ id_prefix }}-tutor)" d="M 7916 8123 C 8009 8078 8207 7983 8355 7912 C 8504 7841 8762 7716 8930 7635 C 9098 7554 9514 7352 9855 7187 C 10196 7022 10516 6868 10565 6845 C 10849 6710 11216 6528 11231 6514 C 11259 6489 11265 6438 11245 6397 C 11231 6366 11211 6354 11064 6284 L 10900 6205 L 10900 5608 L 10900 5011 L 10930 4995 C 11005 4956 11070 4848 11070 4761 C 11070 4673 11007 4558 10937 4521 L 10912 4508 L 10947 4459 C 10985 4406 10974 4456 11076 3875 C 11122 3616 11124 3566 11091 3539 C 11069 3521 11049 3520 10785 3520 C 10517 3520 10501 3521 10477 3540 C 10442 3568 10436 3608 10454 3680 C 10463 3714 10468 3745 10466 3748 C 10464 3752 10471 3800 10481 3855 C 10492 3910 10514 4035 10530 4134 C 10574 4392 10578 4406 10617 4457 L 10653 4504 L 10629 4519 C 10532 4581 10472 4717 10499 4815 C 10515 4877 10564 4946 10620 4986 L 10670 5022 L 10670 5556 C 10670 5850 10668 6090 10666 6090 C 10661 6090 10396 5965 10160 5853 C 10097 5822 9993 5774 9930 5745 C 9867 5716 9752 5662 9676 5626 C 9600 5590 9527 5557 9515 5554 C 9502 5551 9451 5568 9374 5603 C 8974 5786 8603 5893 8140 5957 C 7980 5979 7399 5982 7215 5962 C 6764 5912 6327 5789 5921 5599 L 5813 5549 L 5684 5611 C 5487 5705 5342 5774 5150 5865 C 5054 5910 4914 5977 4840 6013 C 4766 6048 4667 6096 4620 6118 C 4279 6279 4120 6361 4103 6386 C 4083 6417 4084 6475 4106 6508 C 4121 6532 4172 6557 4925 6920 C 5140 7023 5401 7149 5505 7200 C 5610 7251 5819 7352 5970 7425 C 6121 7498 6326 7597 6425 7645 C 6524 7693 6659 7758 6725 7790 C 7357 8093 7551 8184 7585 8196 C 7607 8204 7652 8208 7686 8207 C 7738 8205 7769 8193 7916 8123 Z"/>
+    </g>
+    <g class="platform-logo__part platform-logo__part--face" data-anim="fade-scale" data-delay="0.24" data-dur="0.58" data-origin="center center">
+      <path fill="url(#logo-grad-{{ id_prefix }}-tutor)" d="M 7912 5729 C 8244 5706 8545 5647 8855 5546 C 9079 5472 9185 5428 9415 5314 C 9697 5174 9721 5151 9785 4963 C 9825 4845 9853 4715 9876 4535 C 9900 4345 9891 3959 9857 3770 C 9782 3352 9583 3063 9260 2900 C 9095 2817 8944 2783 8670 2770 C 8557 2765 8429 2758 8385 2756 C 8241 2749 8239 2748 7897 2398 C 7607 2102 7593 2088 7551 2083 C 7520 2079 7498 2082 7476 2094 C 7443 2111 7429 2132 7217 2460 C 7078 2674 7055 2701 6986 2731 C 6941 2751 6910 2754 6730 2761 C 6355 2776 6210 2803 6025 2894 C 5895 2958 5808 3021 5717 3120 C 5557 3293 5460 3504 5407 3794 C 5388 3900 5385 3949 5385 4195 C 5386 4502 5396 4601 5449 4811 C 5499 5009 5541 5102 5606 5159 C 5658 5205 5985 5374 6160 5445 C 6717 5672 7321 5771 7912 5729 Z"/>
+    </g>
+    <g class="platform-logo__part platform-logo__part--glasses" data-anim="drop-bounce" data-delay="0.4" data-dur="0.78" data-origin="50% 15%">
+      <path fill="url(#logo-grad-{{ id_prefix }}-tutor)" d="M 6560 4568 C 6353 4536 6170 4330 6170 4131 C 6171 3924 6310 3743 6514 3685 C 6559 3672 6596 3669 6663 3673 C 6739 3677 6762 3683 6826 3715 C 6925 3764 6998 3837 7045 3935 L 7081 4010 L 7651 4010 C 8185 4010 8221 4009 8226 3993 C 8317 3717 8636 3589 8891 3726 C 9033 3803 9130 3968 9130 4134 C 9130 4200 9092 4310 9046 4375 C 8930 4541 8722 4612 8528 4551 C 8406 4512 8285 4400 8243 4285 L 8224 4235 L 7653 4232 L 7082 4230 L 7046 4306 C 6983 4439 6839 4552 6713 4566 C 6687 4569 6654 4572 6640 4574 C 6626 4576 6590 4573 6560 4568 Z"/>
+    </g>
+    <g class="platform-logo__part platform-logo__part--eye-l" data-anim="pop" data-delay="0.52" data-dur="0.42" data-origin="center center">
+      <circle cx="6720" cy="4270" r="340" fill="#FFFFFF"/>
+    </g>
+    <g class="platform-logo__part platform-logo__part--eye-r" data-anim="pop" data-delay="0.58" data-dur="0.42" data-origin="center center">
+      <circle cx="8560" cy="4270" r="340" fill="#FFFFFF"/>
+    </g>
+    <g class="platform-logo__part platform-logo__part--mouth" data-anim="pop" data-delay="0.64" data-dur="0.42" data-origin="center center">
+      <path fill="url(#logo-grad-{{ id_prefix }}-tutor)" d="M 7381 4125 L 7899 4125 Q 7920 4125 7920 4146 L 7920 4146 Q 7920 4167 7899 4167 L 7381 4167 Q 7360 4167 7360 4146 L 7360 4146 Q 7360 4125 7381 4125 Z"/>
+    </g>
+  </g>
+</svg>
+{% else %}
+<svg class="platform-logo platform-logo--pydep{% if extra_class %} {{ extra_class }}{% endif %}"
+     viewBox="318.03 79.78 884.04 884.04" width="{{ size|default:30 }}" height="{{ size|default:30 }}"
+     preserveAspectRatio="xMidYMid meet"
+     aria-hidden="true">
+  <defs>
+    <linearGradient id="logo-grad-{{ id_prefix }}-pydep" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFC24B"/>
+      <stop offset="55%" stop-color="#FFB020"/>
+      <stop offset="100%" stop-color="#FF9D2E"/>
+    </linearGradient>
+  </defs>
+  <g class="platform-logo__parts" transform="translate(0,1024) scale(0.1,-0.1)">
+    <g class="platform-logo__part platform-logo__part--p" data-anim="flip-in" data-delay="0" data-dur="0.62" data-origin="left center">
+      <path fill="url(#logo-grad-{{ id_prefix }}-pydep)" d="M 7310 7847 C 7329 7842 7381 7832 7425 7823 C 7905 7729 8254 7366 8346 6865 C 8371 6728 8376 6441 8356 6297 C 8279 5748 7941 5369 7417 5245 C 7269 5210 7098 5200 6653 5200 C 6319 5200 6269 5202 6256 5216 C 6242 5229 6240 5273 6240 5539 C 6240 5774 6243 5850 6253 5858 C 6260 5864 6409 5870 6640 5873 C 7058 5879 7102 5884 7228 5946 C 7360 6011 7465 6134 7510 6277 C 7554 6419 7555 6655 7513 6785 C 7449 6983 7321 7099 7115 7147 C 7042 7163 6983 7165 6455 7165 L 5875 7165 L 5870 5417 C 5866 3947 5863 3668 5851 3661 C 5844 3656 5669 3653 5463 3654 C 5105 3655 5088 3656 5074 3674 C 5062 3691 5060 3991 5060 5758 C 5060 7184 5063 7827 5071 7841 C 5081 7860 5096 7861 6178 7857 C 6781 7855 7291 7851 7310 7847 Z"/>
+    </g>
+    <g class="platform-logo__part platform-logo__part--dep" data-anim="fly-right" data-delay="0.12" data-dur="0.72" data-origin="right center">
+      <path fill="url(#logo-grad-{{ id_prefix }}-pydep)" d="M 10657 6534 C 10662 6520 10350 5731 9960 4775 C 9866 4544 9687 4103 9564 3795 C 9318 3184 9260 3054 9174 2922 C 8911 2518 8529 2271 8070 2205 C 7917 2184 6518 2183 6501 2204 C 6492 2214 6489 2281 6488 2427 C 6488 2624 6489 2639 6514 2716 C 6564 2871 6673 2990 6835 3065 C 6975 3130 7003 3133 7550 3140 C 8098 3147 8097 3147 8240 3217 C 8335 3263 8441 3367 8490 3462 L 8524 3528 L 8488 3612 C 8456 3685 8264 4103 7924 4839 C 7867 4963 7820 5072 7820 5082 C 7820 5093 7833 5108 7851 5118 C 8023 5214 8233 5396 8335 5539 C 8387 5611 8400 5623 8416 5612 C 8422 5608 8485 5472 8557 5310 C 8734 4912 8911 4510 8948 4425 C 8973 4368 8980 4359 8986 4375 C 8990 4386 9011 4440 9032 4495 C 9068 4585 9330 5265 9680 6176 C 9750 6358 9813 6517 9819 6529 C 9831 6550 9832 6550 10241 6550 C 10604 6550 10651 6548 10657 6534 Z"/>
+    </g>
+    <g class="platform-logo__part platform-logo__part--snake" data-anim="snake" data-delay="0.28" data-dur="1.05" data-origin="50% 0%">
+      <path fill="url(#logo-grad-{{ id_prefix }}-pydep)" d="M 4768 6024 C 4818 5989 4808 5974 4489 5640 C 4324 5467 4187 5314 4183 5301 C 4180 5287 4183 5267 4191 5254 C 4199 5242 4336 5094 4495 4925 C 4789 4614 4814 4582 4778 4552 C 4770 4546 4704 4540 4611 4538 L 4457 4535 L 4283 4715 C 3827 5185 3799 5217 3793 5259 C 3790 5281 3790 5310 3794 5325 C 3801 5354 4431 6017 4464 6030 C 4476 6035 4544 6039 4615 6039 C 4718 6040 4750 6037 4768 6024 Z"/>
+    </g>
+    <g class="platform-logo__part platform-logo__part--snake-eye" data-anim="pop" data-delay="0.42" data-dur="0.45" data-origin="center center">
+      <circle cx="7034" cy="2668" r="210" fill="#FFFFFF"/>
+    </g>
+    <g class="platform-logo__part platform-logo__part--bracket-r" data-anim="swing-in" data-delay="0.5" data-dur="0.68" data-origin="right center">
+      <path fill="url(#logo-grad-{{ id_prefix }}-pydep)" d="M 10812 5541 C 10825 5536 10957 5404 11105 5246 C 11395 4939 11411 4917 11390 4848 C 11380 4812 11344 4773 10895 4302 C 10816 4219 10843 4226 10628 4229 C 10541 4230 10530 4232 10520 4250 C 10514 4262 10512 4280 10515 4291 C 10519 4302 10634 4431 10771 4578 C 10908 4725 11023 4855 11026 4868 C 11030 4881 11028 4901 11022 4913 C 11017 4925 10905 5049 10774 5189 C 10642 5329 10530 5452 10523 5464 C 10506 5494 10507 5507 10530 5530 C 10548 5548 10563 5550 10669 5550 C 10735 5550 10799 5546 10812 5541 Z"/>
+    </g>
+  </g>
+</svg>
+{% endif %}

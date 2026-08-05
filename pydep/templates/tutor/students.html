@@ -1,0 +1,164 @@
+{% extends 'tutor/base.html' %}
+{% load static %}
+
+{% block title %}Мои ученики — Мой репетитор{% endblock %}
+
+{% block static %}
+<style>
+    .students-page { max-width: 900px; padding: 44px 0; }
+    .students-head { margin-bottom: 1.75rem; }
+    .students-head h1 { font-size: clamp(1.6rem, 4vw, 2.2rem); margin-bottom: .35rem; }
+    .students-head p { color: var(--text-muted); margin: 0; }
+
+    .students-section {
+        margin-bottom: 1.5rem;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        background: var(--surface);
+    }
+    .students-section__head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid var(--border);
+        background: rgba(255,255,255,.02);
+    }
+    .students-section__title {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--heading);
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+    }
+
+    .student-link-row {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 14px 20px;
+        border-bottom: 1px solid var(--border);
+    }
+    .student-link-row:last-child { border-bottom: none; }
+    .student-link-row__avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid var(--border-strong);
+        background: var(--surface-solid);
+        flex: 0 0 48px;
+    }
+    .student-link-row__name { font-weight: 600; color: var(--heading); }
+    .student-link-row__login { font-size: .85rem; color: var(--text-muted); }
+    .student-link-row__meta { font-size: .8rem; color: var(--text-dim); margin-top: 2px; }
+    .students-empty {
+        padding: 2rem 1.25rem;
+        text-align: center;
+        color: var(--text-dim);
+    }
+    .student-rate-form {
+        display: flex; align-items: center; gap: .5rem; flex-wrap: wrap;
+    }
+    .student-rate-form input[type="number"],
+    .student-rate-form .form-control { width: 110px; }
+    .student-rate-form .rate-badge {
+        font-size: .8rem; color: var(--text-muted); white-space: nowrap;
+    }
+    .student-link-row__rate {
+        font-size: .88rem; font-weight: 600; color: #6ee7b7; white-space: nowrap;
+    }
+    .student-link-row__rate--empty { color: var(--text-dim); font-weight: 500; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container students-page px-4 px-lg-3">
+  {% url 'tutor:dashboard' as back_url %}
+  {% include 'course_editor/includes/back_button.html' with back_label="Назад в кабинет" %}
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} mt-3">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="students-head">
+    <h1 class="fw-bold"><span class="text-gradient">Мои ученики</span></h1>
+    <p>Пригласите ученика — он получит запрос в личном кабинете. После подтверждения можно закрепить стоимость часа.</p>
+  </div>
+
+  <div class="students-section">
+    <div class="students-section__head">
+      <h2 class="students-section__title"><i class="bi bi-person-check" style="color:var(--brand)"></i> Прикреплённые ({{ accepted_student_items|length }})</h2>
+      <button type="button" class="btn btn-primary btn-sm" id="inviteStudentTrigger" {% if not available_students %}disabled title="Нет доступных учеников для приглашения"{% endif %}>
+        <i class="bi bi-person-plus me-1"></i> Пригласить
+      </button>
+    </div>
+    {% for item in accepted_student_items %}
+      {% include 'tutor/includes/student_link_row.html' with link=item.link rate_form=item.rate_form lessons_count=item.lessons_count show_unlink=True %}
+    {% empty %}
+      <div class="students-empty">
+        <i class="bi bi-people d-block mb-2" style="font-size:1.5rem;"></i>
+        Пока нет прикреплённых учеников. Нажмите «Пригласить», чтобы отправить запрос.
+      </div>
+    {% endfor %}
+  </div>
+
+  {% if pending_links %}
+  <div class="students-section">
+    <div class="students-section__head">
+      <h2 class="students-section__title"><i class="bi bi-hourglass-split" style="color:#fcd34d"></i> Ожидают ответа ({{ pending_links|length }})</h2>
+    </div>
+    {% for link in pending_links %}
+      <div class="student-link-row">
+        {% if link.student.image %}
+          <img src="{{ link.student.image.url }}" alt="" class="student-link-row__avatar">
+        {% else %}
+          <img src="{% static 'img/anonymous_user.png' %}" alt="" class="student-link-row__avatar">
+        {% endif %}
+        <div class="flex-grow-1">
+          <div class="student-link-row__name">{{ link.student.get_full_name|default:link.student.username }}</div>
+          <div class="student-link-row__login">@{{ link.student.username }}</div>
+          <div class="student-link-row__meta">Отправлено {{ link.created_at|date:"d.m.Y H:i" }}</div>
+        </div>
+        <form method="post" action="{% url 'tutor:student_unlink' link.pk %}">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-ghost btn-sm">Отменить</button>
+        </form>
+      </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+
+{% include 'tutor/includes/student_picker_modal.html' with modal_id='inviteStudentModal' modal_title='Пригласить ученика' search_id='inviteStudentSearch' grid_id='inviteStudentGrid' %}
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/student-picker.js' %}"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const cards = {{ invite_cards_json|safe }};
+    const defaultAvatar = "{% static 'img/anonymous_user.png' %}";
+    PyDepStudentPicker.init({
+      modalId: 'inviteStudentModal',
+      gridId: 'inviteStudentGrid',
+      searchId: 'inviteStudentSearch',
+      triggerId: 'inviteStudentTrigger',
+      cards: cards,
+      defaultAvatar: defaultAvatar,
+      mode: 'invite',
+      inviteBaseUrl: "{% url 'tutor:student_invite' 0 %}",
+      csrfToken: "{{ csrf_token }}",
+    });
+    if (cards.length && document.getElementById('inviteStudentTrigger')) {
+      document.getElementById('inviteStudentTrigger').disabled = false;
+    }
+  });
+</script>
+{% endblock %}

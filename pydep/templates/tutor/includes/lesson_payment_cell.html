@@ -1,0 +1,23 @@
+{% if lesson.status == 'canceled' %}
+  <span class="badge text-bg-secondary">Отменено</span>
+{% elif lesson.has_ended %}
+  {% if is_teacher %}
+    <form method="post" action="{% url 'tutor:lesson_pay' lesson.pk %}" class="d-inline">
+      {% csrf_token %}
+      <button type="submit" class="pay-toggle {% if lesson.is_paid %}is-paid{% else %}is-unpaid{% endif %}" title="Нажмите, чтобы переключить оплату">
+        <i class="bi bi-cash-stack"></i>
+        {% if lesson.is_paid %}Оплачено{% else %}Не оплачено{% endif %}
+      </button>
+    </form>
+  {% else %}
+    {% if lesson.is_paid %}
+      <span class="badge text-bg-success">Оплачено</span>
+    {% else %}
+      <span class="badge text-bg-warning">К оплате</span>
+    {% endif %}
+  {% endif %}
+{% else %}
+  <span class="pay-pending text-muted" title="Оплата доступна после окончания занятия">
+    <i class="bi bi-hourglass-split"></i> После занятия
+  </span>
+{% endif %}

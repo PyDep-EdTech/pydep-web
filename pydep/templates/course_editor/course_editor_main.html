@@ -1,89 +1,74 @@
-{% extends 'base.html' %}
+{% extends 'course_editor/base_studio.html' %}
 {% load static %}
 
-{% block title %}Редактор курсов{% endblock %}
+{% block title %}Студия — PyDep{% endblock %}
 
-{% block static %}
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-<style>
-    .hero {
-        min-height: 90vh;
-        {#background: linear-gradient(120deg, #f0f4ff, #e6eaff);#}
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 60px 20px;
-        text-align: center;
-    }
-    .hero h1 {
-        font-size: 3rem;
-        font-weight: 800;
-        line-height: 1.2;
-        background: linear-gradient(90deg, #007bff, #6610f2);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        margin-bottom: 20px;
-        animation: fadeInDown 1s ease both;
-    }
-    .hero p {
-        font-size: 1.25rem;
-        color: #555;
-        max-width: 700px;
-        margin: 0 auto 30px;
-        animation: fadeInUp 1.2s ease both;
-    }
-    .hero-buttons a {
-        padding: 12px 30px;
-        font-weight: 600;
-        border-radius: 12px;
-        font-size: 1rem;
-        margin: 0 10px;
-        transition: 0.3s ease;
-    }
-    .hero-buttons .btn-primary {
-        background: #007bff;
-        color: white;
-    }
-    .hero-buttons .btn-outline-dark {
-        border: 2px solid #333;
-        color: #333;
-    }
-    .hero-buttons .btn-primary:hover {
-        background: #0056b3;
-    }
-    .hero-buttons .btn-outline-dark:hover {
-        background: #333;
-        color: #fff;
-    }
-    .features {
-        background: #fff;
-        padding: 60px 20px;
-    }
-    .feature-icon {
-        font-size: 3rem;
-        color: #007bff;
-        margin-bottom: 15px;
-    }
-    @keyframes fadeInDown {
-        from { opacity: 0; transform: translateY(-30px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes fadeInUp {
-        from { opacity: 0; transform: translateY(30px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-</style>
-{% endblock %}
-
-{% block content %}
-<section class="hero">
-    <div>
-        <h1>Редактор курсов</h1>
-        <p>Создавайте новые курсы, добавляйте модули и уроки</p>
-        <div class="hero-buttons">
-            <a href="{% url 'studio:course_create' %}" class="btn btn-primary">Создать курс</a>
-            <a href="{% url 'studio:my_courses' %}" class="btn btn-outline-dark">Мои курсы</a>
+{% block studio_content %}
+<section class="studio-hero">
+    <div class="studio-hero__glow studio-hero__glow--a"></div>
+    <div class="studio-hero__glow studio-hero__glow--b"></div>
+    <div class="container studio-hero__inner">
+        <h1>Редактор <span class="text-gradient">курсов</span></h1>
+        <p>Создавайте курсы, собирайте модули и наполняйте уроки в блочном редакторе — всё в одном месте.</p>
+        <div class="d-flex flex-wrap justify-content-center gap-3">
+            <a href="{% url 'studio:course_create' %}" class="btn btn-primary btn-lg">
+                <i class="bi bi-plus-lg me-2"></i>Создать курс
+            </a>
+            <a href="{% url 'studio:my_courses' %}" class="btn btn-ghost btn-lg">Мои курсы</a>
         </div>
+
+        {% if courses_count %}
+        <div class="studio-metrics mt-4 mx-auto" style="max-width:480px;">
+            <div class="studio-metric">
+                <div class="v">{{ courses_count }}</div>
+                <div class="l">Курсов</div>
+            </div>
+            <div class="studio-metric">
+                <div class="v">{{ published_count }}</div>
+                <div class="l">Опубликовано</div>
+            </div>
+            <div class="studio-metric">
+                <div class="v">{{ draft_count }}</div>
+                <div class="l">Черновиков</div>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="studio-feature-grid">
+            <div class="studio-feature reveal">
+                <div class="studio-feature__ic"><i class="bi bi-diagram-3"></i></div>
+                <h3>Структура курса</h3>
+                <p>Модули и уроки в дереве слева. Перетаскивайте для изменения порядка.</p>
+            </div>
+            <div class="studio-feature reveal" data-delay="80">
+                <div class="studio-feature__ic"><i class="bi bi-pencil-square"></i></div>
+                <h3>Блочный редактор</h3>
+                <p>Editor.js: заголовки, код, изображения, таблицы и чеклисты.</p>
+            </div>
+            <div class="studio-feature reveal" data-delay="160">
+                <div class="studio-feature__ic"><i class="bi bi-eye"></i></div>
+                <h3>Публикация</h3>
+                <p>Черновик или публикация в каталоге — в один клик с предпросмотром.</p>
+            </div>
+        </div>
+
+        {% if recent_courses %}
+        <div class="mt-5 text-start" style="max-width:640px;margin-left:auto;margin-right:auto;">
+            <h3 class="h5 mb-3" style="color:var(--heading);">Недавние курсы</h3>
+            <div class="d-flex flex-column gap-2">
+                {% for c in recent_courses %}
+                <a href="{% url 'studio:course_edit' c.id %}" class="studio-sortable__item text-decoration-none" style="cursor:pointer;">
+                    <i class="bi bi-mortarboard" style="color:var(--brand);"></i>
+                    <div class="studio-sortable__body">
+                        <div class="studio-sortable__title">{{ c.name }}</div>
+                        <div class="studio-sortable__meta">{% if c.is_published %}Опубликован{% else %}Черновик{% endif %}</div>
+                    </div>
+                    <i class="bi bi-chevron-right text-muted"></i>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
     </div>
 </section>
 {% endblock %}

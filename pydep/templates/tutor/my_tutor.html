@@ -1,108 +1,70 @@
 {% extends 'tutor/base.html' %}
 {% load static %}
 
-{% block title %}ProjectBox{% endblock %}
+{% block title %}Мой репетитор — PyDep{% endblock %}
 
 {% block static %}
-    <style>
+<style>
     .hero {
-        min-height: 90vh;
-        {#background: linear-gradient(120deg, #f0f4ff, #e6eaff);#}
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 60px 20px;
-        text-align: center;
+        position: relative; overflow: hidden;
+        padding: 100px 0 70px; text-align: center;
     }
-    .hero h1 {
-        font-size: 3rem;
-        font-weight: 800;
-        line-height: 1.2;
-        background: linear-gradient(90deg, #ff3b30, #601c14);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        margin-bottom: 20px;
-        animation: fadeInDown 1s ease both;
+    .hero-orb { position: absolute; border-radius: 50%; filter: blur(70px); opacity: .5; z-index: 0; animation: floaty 9s ease-in-out infinite; }
+    .orb-a { width: 340px; height: 340px; background: #FFB020; top: -80px; left: -40px; }
+    .orb-b { width: 300px; height: 300px; background: #FFB020; top: 20px; right: -60px; opacity: .32; animation-delay: 2s; }
+    .hero-inner { position: relative; z-index: 2; }
+    .hero h1 { font-size: clamp(2.4rem, 5.5vw, 4rem); line-height: 1.05; margin-bottom: 1.2rem; }
+    .hero p { font-size: 1.2rem; color: var(--text-muted); max-width: 620px; margin: 0 auto 2rem; }
+
+    .section { padding: 60px 0 90px; }
+    .feature-card {
+        height: 100%; padding: 2rem 1.7rem; background: var(--surface); border: 1px solid var(--border);
+        border-radius: var(--radius-lg); transition: transform .35s cubic-bezier(.22,.61,.36,1), border-color .3s ease, box-shadow .35s ease;
     }
-    .hero p {
-        font-size: 1.25rem;
-        color: #555;
-        max-width: 700px;
-        margin: 0 auto 30px;
-        animation: fadeInUp 1.2s ease both;
-    }
-    .hero-buttons a {
-        padding: 12px 30px;
-        font-weight: 600;
-        border-radius: 12px;
-        font-size: 1rem;
-        margin: 0 10px;
-        transition: 0.3s ease;
-    }
-    .hero-buttons .btn-primary {
-        background: #ff3b30;
-        color: white;
-    }
-    .hero-buttons .btn-outline-dark {
-        border: 2px solid #333;
-        color: #333;
-    }
-    .hero-buttons .btn-primary:hover {
-        background: #c83127;
-    }
-    .hero-buttons .btn-outline-dark:hover {
-        background: #333;
-        color: #fff;
-    }
-    .features {
-        background: #fff;
-        padding: 60px 20px;
-    }
-    .feature-icon {
-        font-size: 3rem;
-        color: #ff3b30;
-        margin-bottom: 15px;
-    }
-    @keyframes fadeInDown {
-        from { opacity: 0; transform: translateY(-30px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes fadeInUp {
-        from { opacity: 0; transform: translateY(30px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
+    .feature-card:hover { transform: translateY(-8px); border-color: var(--border-strong); box-shadow: var(--shadow-glow); }
+    .feature-ic { width: 56px; height: 56px; border-radius: 16px; display: grid; place-items: center; font-size: 1.6rem; color: #fff; background: var(--grad-brand); box-shadow: 0 12px 28px -10px rgba(255, 176, 32,.7); margin-bottom: 1.2rem; }
+    .feature-card h5 { font-size: 1.2rem; margin-bottom: .6rem; }
+    .feature-card p { color: var(--text-muted); margin: 0; }
 </style>
 {% endblock %}
 
 {% block content %}
 <section class="hero">
-    <div>
-        <h1>Управляй своими занятиями.</h1>
-        <p>Составляй расписание, смотри домашку и переписывайся с преподавателями.</p>
-        <div class="hero-buttons">
-            <a href="{% url 'lesson:courses' %}" class="btn btn-primary" style="border-color: #601C14FF;">К занятиям</a>
-            <a href="{% url 'lesson:profile' %}" class="btn btn-outline-dark">Мой профиль</a>
+    <div class="hero-orb orb-a"></div>
+    <div class="hero-orb orb-b"></div>
+    <div class="container hero-inner">
+        <h1>Управляй своими <span class="text-gradient">занятиями</span></h1>
+        <p>Составляй расписание, отслеживай домашние задания и держи связь с преподавателями — всё в одном месте.</p>
+        <div class="d-flex flex-wrap justify-content-center gap-3">
+            <a href="{% url 'users:signin' %}?next={% url 'tutor:dashboard' %}" class="btn btn-primary btn-lg">Начать <i class="bi bi-arrow-right ms-1"></i></a>
+            <a href="{% url 'lesson:profile' %}" class="btn btn-ghost btn-lg">Мой профиль</a>
         </div>
     </div>
 </section>
 
-<section class="features text-center">
+<section class="section">
     <div class="container">
-        <div class="row">
-            <div class="col-md-4">
-                <div class="feature-icon"><i class="bi bi-code-slash"></i></div>
-                <h5 class="fw-bold">Актуальные курсы</h5>
-                <p>Только то, что действительно нужно работодателю — от Python до SQL и Django.</p>
+        <div class="row g-4">
+            <div class="col-md-4 reveal">
+                <a class="feature-card d-block text-decoration-none h-100" href="{% url 'tutor:schedule' %}">
+                    <div class="feature-ic"><i class="bi bi-calendar3"></i></div>
+                    <h5>Гибкое расписание</h5>
+                    <p>Планируй занятия в удобное время и следи за ближайшими уроками.</p>
+                </a>
             </div>
-            <div class="col-md-4">
-                <div class="feature-icon"><i class="bi bi-person-video3"></i></div>
-                <h5 class="fw-bold">Поддержка наставников</h5>
-                <p>Каждое задание проверяется экспертом, а на вопросы ты получаешь быстрые ответы.</p>
+            <div class="col-md-4 reveal" data-delay="120">
+                <a class="feature-card d-block text-decoration-none h-100" href="{% url 'tutor:homework_list' %}">
+                    <div class="feature-ic"><i class="bi bi-journal-check"></i></div>
+                    <h5>Домашние задания</h5>
+                    <p>Выдавай и сдавай работы, получай оценки и обратную связь.</p>
+                </a>
             </div>
-            <div class="col-md-4">
-                <div class="feature-icon"><i class="bi bi-award"></i></div>
-                <h5 class="fw-bold">Сертификаты и кейсы</h5>
-                <p>Портфолио с настоящими проектами и документами, которые ценят компании.</p>
+            <div class="col-md-4 reveal" data-delay="240">
+                <a class="feature-card d-block text-decoration-none h-100" href="{% url 'tutor:projectbox' %}">
+                    <div class="feature-ic"><i class="bi bi-folder2-open"></i></div>
+                    <h5>Файлы проектов</h5>
+                    <p>Делись материалами и решениями в общем хранилище.</p>
+                </a>
             </div>
         </div>
     </div>

@@ -1,115 +1,154 @@
 {% extends 'tutor/base.html' %}
 {% load static %}
 
-{% block title %}Расписание{% endblock %}
+{% block title %}Расписание — Мой репетитор{% endblock %}
 
 {% block static %}
+<style>
+    .schedule-view-switch { margin-bottom: 1rem; }
+    .tutor-calendar {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 1.15rem;
+    }
+    .tutor-cal__head {
+        display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+        gap: .75rem; margin-bottom: .85rem;
+    }
+    .tutor-cal__title {
+        font-family: 'Bricolage Grotesque', sans-serif;
+        font-size: 1.15rem; font-weight: 700; color: var(--heading); margin: 0;
+    }
+    .tutor-cal__nav { display: flex; gap: .35rem; align-items: center; }
+    .tutor-cal__weekdays {
+        display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 4px;
+    }
+    .tutor-cal__weekdays span {
+        text-align: center; font-size: .7rem; font-weight: 700;
+        text-transform: uppercase; color: var(--text-dim); padding: .25rem 0;
+    }
+    .tutor-cal__days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+    .tutor-cal__day {
+        min-height: 72px; padding: .4rem;
+        border: 1px solid var(--border); border-radius: 10px;
+        background: var(--surface-2); color: var(--text);
+        text-align: left; cursor: pointer;
+    }
+    .tutor-cal__day--empty { border: none; background: transparent; cursor: default; min-height: 0; }
+    .tutor-cal__day.is-today { border-color: rgba(255, 176, 32,.5); }
+    .tutor-cal__day.is-selected { border-color: var(--brand); background: rgba(255, 176, 32,.1); }
+    .tutor-cal__num { font-size: .8rem; color: var(--text-muted); display: block; margin-bottom: .35rem; }
+    .tutor-cal__dots { display: flex; flex-wrap: wrap; gap: 3px; }
+    .tutor-cal__dot { width: 6px; height: 6px; border-radius: 50%; }
+    .tutor-cal__dot.is-future { background: #67e8f9; }
+    .tutor-cal__dot.is-paid { background: #6ee7b7; }
+    .tutor-cal__dot.is-due { background: #fcd34d; }
+    .tutor-cal__dot.is-muted { background: #94a3b8; }
+    .tutor-cal__detail { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+    .tutor-cal__detail-title { font-weight: 700; color: var(--heading); margin-bottom: .65rem; text-transform: capitalize; font-size: .95rem; }
+    .tutor-cal__cards { display: flex; flex-direction: column; gap: .5rem; }
+    .tutor-cal__card {
+        display: block; padding: .85rem 1rem; border-radius: 12px;
+        border: 1px solid var(--border); background: var(--surface-solid);
+        color: var(--text); text-decoration: none;
+    }
+    a.tutor-cal__card:hover { border-color: var(--brand); color: var(--text); }
+    .tutor-cal__card-top { display: flex; justify-content: space-between; margin-bottom: .35rem; }
+    .tutor-cal__card-time { font-size: .78rem; font-weight: 700; color: var(--brand); }
+    .tutor-cal__card-status { font-size: .72rem; color: var(--text-dim); }
+    .tutor-cal__card-title { display: block; color: var(--heading); font-size: .95rem; }
+    .tutor-cal__card-meta { margin: 0; font-size: .82rem; color: var(--text-muted); }
+    .tutor-cal__card-link { margin-top: .5rem; font-size: .78rem; font-weight: 600; color: var(--brand); }
+    .status-canceled { background: rgba(148,163,184,.2) !important; color: #cbd5e1 !important; }
+</style>
 {% endblock %}
 
 {% block content %}
 <section class="py-5">
-  <div class="container px-5">
-    <div class="mb-4">
-      <h1 class="fw-bold mb-1"><span class="text-danger">Расписание</span> занятий</h1>
-      <p class="text-muted mb-0">Планируйте уроки по дням недели и времени.</p>
+  <div class="container tutor-page tutor-page--wide px-4 px-lg-3">
+    <div class="tutor-toolbar">
+      <div class="tutor-page-head mb-0">
+        <h1 class="fw-bold mb-1"><span class="text-gradient">{% if role == 'teach' %}Мои занятия{% else %}Я учусь{% endif %}</span></h1>
+        <p class="mb-0 text-muted">Календарь и список — без лишних деталей.</p>
+      </div>
+      {% if role == 'teach' and is_teacher %}
+        <a href="{% url 'tutor:lesson_create' %}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg"></i> Занятие</a>
+      {% endif %}
     </div>
 
-    <div class="d-flex gap-2 mb-3">
-      <a href="{% url 'tutor:lesson_create' %}" class="btn btn-outline-danger btn-sm"><i class="bi bi-plus-lg"></i> Добавить занятие</a>
-      <a href="{% url 'tutor:schedule' %}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-repeat"></i> Обновить</a>
+    {% if messages %}
+      {% for message in messages %}<div class="alert alert-{{ message.tags }}">{{ message }}</div>{% endfor %}
+    {% endif %}
+
+    {% if is_teacher and is_student %}
+    <div class="tutor-role-pills mb-3">
+      <a href="?role=teach" class="{% if role == 'teach' %}is-active{% endif %}">Преподаю</a>
+      <a href="?role=learn" class="{% if role == 'learn' %}is-active{% endif %}">Учусь</a>
+    </div>
+    {% endif %}
+
+    {% if stats.unpaid and role == 'teach' %}
+    <div class="tutor-alert-strip mb-3">
+      <a href="{% url 'tutor:finances' %}" class="is-warn"><i class="bi bi-cash"></i> {{ stats.unpaid }} к оплате — в финансах</a>
+    </div>
+    {% endif %}
+
+    <div class="schedule-view-switch btn-group" data-schedule-view data-default-view="calendar" role="group">
+      <button type="button" class="btn btn-sm btn-primary active" data-view="calendar"><i class="bi bi-calendar3 me-1"></i>Календарь</button>
+      <button type="button" class="btn btn-sm btn-ghost" data-view="list"><i class="bi bi-list-ul me-1"></i>Список</button>
     </div>
 
-    <ul class="nav nav-tabs" role="tablist">
-      <li class="nav-item" role="presentation">
-        <button class="nav-link active" id="teacher-tab" data-bs-toggle="tab" data-bs-target="#teacher" type="button" role="tab" aria-controls="teacher" aria-selected="true">Учитель</button>
-      </li>
-      <li class="nav-item" role="presentation">
-        <button class="nav-link" id="student-tab" data-bs-toggle="tab" data-bs-target="#student" type="button" role="tab" aria-controls="student" aria-selected="false">Ученик</button>
-      </li>
-    </ul>
-
-    <div class="tab-content pt-3">
-      <div class="tab-pane fade show active" id="teacher" role="tabpanel" aria-labelledby="teacher-tab">
-        <div class="table-responsive">
-          <table class="table table-hover align-middle">
-            <thead class="table-light">
-              <tr>
-                <th scope="col">Дата</th>
-                <th scope="col">Время</th>
-                <th scope="col">Ученик</th>
-                <th scope="col">Предмет</th>
-                <th scope="col">Формат</th>
-                <th scope="col">Комментарий</th>
-                <th scope="col">Оплата</th>
-                <th scope="col" class="text-end">Действия</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for l in teacher_lessons %}
-              <tr>
-                <td>{{ l.date|date:"d.m.Y" }}</td>
-                <td>{{ l.start_time|time:"H:i" }}–{{ l.end_time|time:"H:i" }}</td>
-                <td>{% if l.student %}{{ l.student.get_full_name|default:l.student.username }}{% else %}<span class="text-muted">—</span>{% endif %}</td>
-                <td>{{ l.subject }}</td>
-                <td>{{ l.get_lesson_format_display }}</td>
-                <td class="text-truncate" style="max-width: 240px;">{{ l.comment }}</td>
-                <td>
-                  {% if l.is_paid %}
-                    <span class="badge text-bg-success">Оплачено</span>
+    <div class="schedule-list-view" hidden>
+      <div class="tutor-card">
+        <div class="tutor-card__body">
+          {% for l in lessons %}
+            {% if can_edit %}
+            <a href="{% url 'tutor:lesson_update' l.pk %}" class="tutor-row">
+            {% else %}
+            <div class="tutor-row">
+            {% endif %}
+              <div class="tutor-row__when">{{ l.date|date:"d.m" }}<span>{{ l.start_time|time:"H:i" }}–{{ l.end_time|time:"H:i" }}</span></div>
+              <div class="tutor-row__main">
+                <div class="tutor-row__title">{{ l.subject }}</div>
+                <div class="tutor-row__meta">
+                  {% if role == 'teach' %}
+                    {{ l.student.get_full_name|default:l.student.username|default:"—" }}
                   {% else %}
-                    <span class="badge text-bg-warning">Не оплачено</span>
+                    {{ l.teacher.get_full_name|default:l.teacher.username }}
                   {% endif %}
-                </td>
-                <td class="text-end">
-                  <a class="btn btn-sm btn-outline-secondary" href="{% url 'tutor:lesson_update' l.pk %}"><i class="bi bi-pencil"></i></a>
-                  <a class="btn btn-sm btn-outline-danger" href="{% url 'tutor:lesson_payment' l.pk %}"><i class="bi bi-cash-coin"></i></a>
-                </td>
-              </tr>
-              {% empty %}
-              <tr>
-                <td colspan="8" class="text-muted">Пока нет занятий.</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div class="tab-pane fade" id="student" role="tabpanel" aria-labelledby="student-tab">
-        <div class="table-responsive">
-          <table class="table table-hover align-middle">
-            <thead class="table-light">
-              <tr>
-                <th scope="col">Дата</th>
-                <th scope="col">Время</th>
-                <th scope="col">Преподаватель</th>
-                <th scope="col">Предмет</th>
-                <th scope="col">Формат</th>
-                <th scope="col">Статус</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for l in student_lessons %}
-              <tr>
-                <td>{{ l.date|date:"d.m.Y" }}</td>
-                <td>{{ l.start_time|time:"H:i" }}–{{ l.end_time|time:"H:i" }}</td>
-                <td>{{ l.teacher.get_full_name|default:l.teacher.username }}</td>
-                <td>{{ l.subject }}</td>
-                <td>{{ l.get_lesson_format_display }}</td>
-                <td>{{ l.get_status_display }}</td>
-              </tr>
-              {% empty %}
-              <tr>
-                <td colspan="6" class="text-muted">Пока нет занятий.</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
+                </div>
+              </div>
+              <span class="badge {% if l.status == 'canceled' %}status-canceled{% else %}text-bg-primary{% endif %}">{{ l.get_status_display }}</span>
+            {% if can_edit %}</a>{% else %}</div>{% endif %}
+          {% empty %}
+            <div class="tutor-empty">
+              {% if role == 'teach' %}Пока нет занятий. <a href="{% url 'tutor:lesson_create' %}">Создать первое</a>{% else %}У вас пока нет занятий.{% endif %}
+            </div>
+          {% endfor %}
         </div>
       </div>
     </div>
 
-    <p class="text-muted small mt-2 mb-0">Подсказка: используйте кнопки сверху для управления расписанием.</p>
+    <div class="schedule-calendar-view">
+      {{ calendar_events|json_script:calendar_json_id }}
+      <div class="tutor-calendar" data-json-id="{{ calendar_json_id }}" data-can-edit="{% if can_edit %}true{% else %}false{% endif %}">
+        <div class="tutor-cal__head">
+          <h2 class="tutor-cal__title">—</h2>
+          <div class="tutor-cal__nav">
+            <button type="button" class="btn btn-sm btn-ghost" data-cal-prev><i class="bi bi-chevron-left"></i></button>
+            <button type="button" class="btn btn-sm btn-ghost" data-cal-today>Сегодня</button>
+            <button type="button" class="btn btn-sm btn-ghost" data-cal-next><i class="bi bi-chevron-right"></i></button>
+          </div>
+        </div>
+        <div class="tutor-cal__grid"></div>
+        <div class="tutor-cal__detail" hidden></div>
+      </div>
+    </div>
   </div>
-  </section>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/tutor-calendar.js' %}"></script>
 {% endblock %}

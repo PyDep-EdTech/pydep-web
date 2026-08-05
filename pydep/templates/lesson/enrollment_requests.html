@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Заявки на курсы — PyDep{% endblock %}
+
+{% block static %}
+<style>
+    .req-wrap { max-width: 920px; margin: 0 auto; padding: 44px 0; }
+    .req-head { margin-bottom: 26px; }
+    .req-head h1 { font-size: clamp(1.9rem, 4vw, 2.6rem); margin-bottom: .4rem; }
+    .req-head p { color: var(--text-muted); margin: 0; }
+
+    .req-card {
+        display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+        padding: 16px 20px; margin-bottom: 12px;
+        border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface);
+    }
+    .req-card__main { flex: 1 1 240px; min-width: 0; }
+    .req-card__user { font-weight: 700; color: var(--heading); }
+    .req-card__meta { color: var(--text-muted); font-size: .88rem; margin-top: 2px; }
+    .req-link { color: inherit; text-decoration: none; border-bottom: 1px dashed transparent; transition: color .15s, border-color .15s; }
+    .req-link:hover { color: var(--brand); border-bottom-color: var(--brand); }
+    .req-card__actions { display: flex; gap: 8px; }
+
+    .req-state { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 999px; font-size: .78rem; font-weight: 700; }
+    .st-approved { background: rgba(52,211,153,.16); color: #6ee7b7; border: 1px solid rgba(52,211,153,.3); }
+    .st-rejected { background: rgba(248,113,113,.14); color: #fca5a5; border: 1px solid rgba(248,113,113,.3); }
+
+    .req-empty { padding: 48px; text-align: center; border: 1px dashed var(--border-strong); border-radius: var(--radius-lg); color: var(--text-muted); }
+    .req-empty i { font-size: 2.4rem; color: var(--brand); display: block; margin-bottom: 12px; }
+    .sec-title { font-size: 1.05rem; font-weight: 700; color: var(--heading); margin: 30px 0 14px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container req-wrap">
+    <div class="req-head">
+        <h1>Заявки на курсы</h1>
+        <p>Одобряйте или отклоняйте запросы на доступ к платным курсам.</p>
+    </div>
+
+    {% if messages %}{% for message in messages %}<div class="alert alert-{{ message.tags }}">{{ message }}</div>{% endfor %}{% endif %}
+
+    {% for e in pending %}
+        <div class="req-card">
+            <div class="req-card__main">
+                <div class="req-card__user">
+                    <a href="{% url 'admin:users_customuser_change' e.user.pk %}" class="req-link">{{ e.user.get_full_name|default:e.user.username }}</a>
+                    <span class="text-muted">@{{ e.user.username }}</span>
+                </div>
+                <div class="req-card__meta">
+                    <i class="bi bi-mortarboard me-1"></i><a href="{% url 'lesson:course_detail' e.course.slug %}" class="req-link">{{ e.course.name }}</a>
+                    · {{ e.course.price }} ₽ · заявка от {{ e.enrolled_at|date:"d.m.Y H:i" }}
+                </div>
+            </div>
+            <div class="req-card__actions">
+                <form method="post" action="{% url 'lesson:enrollment_decide' e.pk 'approve' %}">{% csrf_token %}
+                    <button class="btn btn-primary btn-sm" type="submit"><i class="bi bi-check2 me-1"></i>Одобрить</button>
+                </form>
+                <form method="post" action="{% url 'lesson:enrollment_decide' e.pk 'reject' %}">{% csrf_token %}
+                    <button class="btn btn-ghost btn-sm text-danger" type="submit"><i class="bi bi-x-lg me-1"></i>Отклонить</button>
+                </form>
+            </div>
+        </div>
+    {% empty %}
+        <div class="req-empty"><i class="bi bi-inbox"></i>Нет заявок, ожидающих решения.</div>
+    {% endfor %}
+
+    {% if decided %}
+        <div class="sec-title">Недавно обработанные</div>
+        {% for e in decided %}
+            <div class="req-card">
+                <div class="req-card__main">
+                    <div class="req-card__user"><a href="{% url 'admin:users_customuser_change' e.user.pk %}" class="req-link">{{ e.user.get_full_name|default:e.user.username }}</a></div>
+                    <div class="req-card__meta"><a href="{% url 'lesson:course_detail' e.course.slug %}" class="req-link">{{ e.course.name }}</a>{% if e.decided_by %} · {{ e.decided_by.username }}{% endif %}{% if e.decided_at %} · {{ e.decided_at|date:"d.m.Y H:i" }}{% endif %}</div>
+                </div>
+                <span class="req-state st-{{ e.status }}">
+                    {% if e.status == 'approved' %}<i class="bi bi-check2"></i> Одобрена{% else %}<i class="bi bi-x"></i> Отклонена{% endif %}
+                </span>
+            </div>
+        {% endfor %}
+    {% endif %}
+</div>
+{% endblock %}

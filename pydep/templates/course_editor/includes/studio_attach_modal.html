@@ -1,0 +1,24 @@
+<div class="modal fade" id="{{ modal_id }}" tabindex="-1" aria-labelledby="{{ modal_id }}Label" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="{{ modal_id }}Label">
+          <i class="bi {{ modal_icon|default:'bi-search' }} me-2"></i>{{ modal_title }}
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+      </div>
+      <div class="modal-body">
+        <div class="student-picker-search-wrap mb-3">
+          <i class="bi bi-search"></i>
+          <input type="search" class="form-control" id="{{ search_id }}" placeholder="{{ search_placeholder|default:'Поиск…' }}" autocomplete="off">
+        </div>
+        <div class="student-picker-grid" id="{{ grid_id }}"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<form method="post" id="{{ form_id }}" class="d-none">
+  {% csrf_token %}
+  <input type="hidden" name="{{ attach_field }}" value="1">
+  <input type="hidden" name="{{ id_field }}" id="{{ id_input_id }}" value="">
+</form>

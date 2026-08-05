@@ -1,0 +1,71 @@
+{% extends 'tutor/base.html' %}
+{% load static %}
+
+{% block title %}Домашние задания — Мой репетитор{% endblock %}
+
+{% block static %}
+<style>
+    .hw-card {
+        display: block; padding: 16px 18px; border-radius: var(--radius);
+        background: var(--surface); border: 1px solid var(--border);
+        color: var(--text); margin-bottom: 10px; text-decoration: none;
+        transition: border-color .2s;
+    }
+    .hw-card:hover { border-color: var(--brand); color: var(--text); }
+    .hw-title { font-weight: 700; color: var(--heading); font-size: 1rem; }
+    .hw-meta { color: var(--text-muted); font-size: .84rem; margin-top: 3px; }
+    .hw-state {
+        display: inline-flex; padding: 4px 10px; border-radius: 999px;
+        font-size: .75rem; font-weight: 700;
+    }
+    .st-assigned { background: rgba(251,191,36,.16); color: #fcd34d; }
+    .st-submitted { background: rgba(255, 176, 32,.14); color: #a5f3fc; }
+    .st-graded { background: rgba(52,211,153,.16); color: #6ee7b7; }
+    .hw-overdue { color: #fca5a5; }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="py-5">
+  <div class="container tutor-page px-4 px-lg-3">
+    <div class="tutor-toolbar">
+      <div class="tutor-page-head mb-0">
+        <h1 class="fw-bold mb-1"><span class="text-gradient">Домашние</span> задания</h1>
+      </div>
+      {% if is_teacher and view == 'issued' %}
+        <a href="{% url 'tutor:homework_create' %}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg"></i> Выдать</a>
+      {% endif %}
+    </div>
+
+    {% if messages %}{% for message in messages %}<div class="alert alert-{{ message.tags }}">{{ message }}</div>{% endfor %}{% endif %}
+
+    {% if show_view_switch %}
+    <div class="tutor-role-pills mb-3">
+      <a href="?view=issued" class="{% if view == 'issued' %}is-active{% endif %}">Я выдал</a>
+      <a href="?view=assigned" class="{% if view == 'assigned' %}is-active{% endif %}">Мне назначено</a>
+    </div>
+    {% endif %}
+
+    {% for hw in homeworks %}
+      <a class="hw-card d-flex justify-content-between align-items-start gap-3" href="{% url 'tutor:homework_detail' hw.pk %}">
+        <div class="min-width-0">
+          <div class="hw-title">{{ hw.title }}</div>
+          <div class="hw-meta">
+            {% if view == 'issued' %}
+              {{ hw.student.get_full_name|default:hw.student.username }} · {{ hw.lesson.subject }}
+            {% else %}
+              {{ hw.teacher.get_full_name|default:hw.teacher.username }} · {{ hw.lesson.subject }}
+            {% endif %}
+            {% if hw.due_date %} · до {{ hw.due_date|date:"d.m.Y" }}{% if hw.is_overdue %} <span class="hw-overdue">(просрочено)</span>{% endif %}{% endif %}
+          </div>
+        </div>
+        <span class="hw-state st-{{ hw.state }}">{{ hw.state_label }}{% if hw.grade %} {{ hw.grade }}/5{% endif %}</span>
+      </a>
+    {% empty %}
+      <div class="tutor-empty tutor-card" style="padding:2.5rem;">
+        {% if view == 'issued' %}Вы ещё не выдавали заданий.{% else %}Вам пока не назначали заданий.{% endif %}
+      </div>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

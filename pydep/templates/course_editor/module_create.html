@@ -4,7 +4,6 @@
 {% block title %}{% if module %}Редактирование модуля{% else %}Создание модуля{% endif %}{% endblock %}
 
 {% block static %}
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 <style>
     .module-form-section h5 {
         font-weight: 600;
@@ -12,37 +11,46 @@
     .lessons-list {
         max-height: 400px;
         overflow-y: auto;
-        border: 1px solid #dee2e6;
-        border-radius: 8px;
+        border: 1px solid var(--border);
+        border-radius: 12px;
         padding: 1rem;
-        background: #f8f9fa;
+        background: var(--surface-solid);
     }
     .lesson-checkbox-item {
         padding: 0.75rem;
         margin-bottom: 0.5rem;
-        background: white;
-        border-radius: 6px;
-        border: 1px solid #dee2e6;
+        background: var(--surface);
+        border-radius: 10px;
+        border: 1px solid var(--border);
     }
     .lesson-checkbox-item:hover {
-        background: #f0f4f8;
+        background: var(--surface-2);
     }
-    
+
+    .lesson-checkbox-item .form-check {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: .75rem;
+        width: 100%;
+    }
+
     .collapsible-header {
         cursor: pointer;
         user-select: none;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 0.75rem 1rem;
-        background: #f8f9fa;
-        border-radius: 8px;
+        padding: 0.85rem 1.1rem;
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        border-radius: 12px;
         margin-bottom: 1rem;
         transition: background 0.2s;
     }
-    
+
     .collapsible-header:hover {
-        background: #e9ecef;
+        background: var(--surface);
     }
     
     .collapsible-header h5 {
@@ -76,7 +84,10 @@
 {% endblock %}
 
 {% block content %}
-<div class="container py-4">
+<div class="container studio-page">
+    {% url 'studio:course_edit' course.id as back_url %}
+    {% include 'course_editor/includes/back_button.html' with back_label="Назад к курсу" %}
+
     <div class="content-card mb-4">
         <h1 class="mb-2">{% if module %}Редактирование модуля{% else %}Создание нового модуля{% endif %}</h1>
         <p class="mb-0 text-muted">Заполните информацию о модуле и выберите уроки. Уроки можно создать отдельно.</p>
@@ -132,9 +143,9 @@
                         <i class="bi bi-plus-circle"></i> Создать урок
                     </a>
                 {% else %}
-                    <a href="{% url 'studio:lesson_create' course.id module.id %}" class="btn btn-outline-primary btn-sm" style="pointer-events: none; opacity: 0.5;">
+                    <span class="btn btn-outline-primary btn-sm" style="pointer-events: none; opacity: 0.5;" title="Сначала сохраните модуль">
                         <i class="bi bi-plus-circle"></i> Создать урок
-                    </a>
+                    </span>
                 {% endif %}
             </div>
             <div class="collapsible-content {% if module %}collapsed{% endif %}" id="lessons-section">
@@ -154,6 +165,11 @@
                                 <label class="form-check-label" for="lesson_{{ lesson.id }}">
                                     {{ lesson.title }}
                                 </label>
+                                {% if module %}
+                                    <a href="{% url 'studio:lesson_edit' course.id module.id lesson.id %}" class="btn btn-outline-primary btn-sm">
+                                        <i class="bi bi-pencil"></i> Редактировать
+                                    </a>
+                                {% endif %}
                             </div>
                         </div>
                     {% endfor %}
@@ -176,14 +192,8 @@
             </div>
         </div>
     {% endif %}
-        <div class="d-flex justify-content-between">
-            {% if request.GET.course_id %}
-                <a href="{% url 'studio:course_create' %}" class="btn btn-secondary btn-custom">
-                    <span>←</span> Назад к курсу
-                </a>
-            {% else %}
-                <a href="{% url 'studio:main' %}" class="btn btn-secondary btn-custom">Отмена</a>
-            {% endif %}
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <a href="{% url 'studio:course_edit' course.id %}" class="btn btn-secondary btn-custom">Отмена</a>
             <button type="submit" class="btn btn-primary btn-custom">{% if module %}Сохранить{% else %}Создать модуль{% endif %}</button>
         </div>
     </form>
@@ -262,6 +272,9 @@
         // Сворачивающиеся блоки
         document.addEventListener('DOMContentLoaded', function() {
             document.querySelectorAll('.collapsible-header').forEach(header => {
+                header.querySelectorAll('a, button').forEach(el => {
+                    el.addEventListener('click', e => e.stopPropagation());
+                });
                 header.addEventListener('click', function() {
                     const targetId = this.getAttribute('data-target');
                     const content = document.getElementById(targetId);

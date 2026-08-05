@@ -1,7 +1,10 @@
 from django_ckeditor_5.fields import CKEditor5Field
 from django.db import models
+from django.utils import timezone
 from django.utils.text import slugify
 from transliterate import translit
+
+from lesson.slugs import unique_slug
 import json
 
 
@@ -19,6 +22,7 @@ class Category(models.Model):
     class Meta:
         verbose_name = "Категория"
         verbose_name_plural = "Категории"
+        ordering = ["name"]
 
     def save(self, *args, **kwargs):
         if not self.slug:
@@ -33,6 +37,7 @@ class Category(models.Model):
 
 class Lesson(models.Model):
     title = models.CharField(max_length=255)
+    slug = models.SlugField(max_length=120, unique=True, blank=True)
     description = CKEditor5Field('Text', config_name='extends', blank=True, null=True)
     # Блочный контент урока - массив блоков в формате Editor.js
     content_blocks = models.JSONField(
@@ -58,6 +63,11 @@ class Lesson(models.Model):
         """Проверяет, есть ли блоки контента"""
         return bool(self.content_blocks and len(self.content_blocks) > 0)
 
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = unique_slug(Lesson, self.title, exclude_pk=self.pk)
+        super().save(*args, **kwargs)
+
 
 class Module(models.Model):
     title = models.CharField(
@@ -65,12 +75,14 @@ class Module(models.Model):
         unique=True,
         verbose_name="Название"
     )
+    slug = models.SlugField(max_length=120, unique=True, blank=True)
     description = models.TextField(
         verbose_name='Описание'
     )
     image = models.ImageField(
         upload_to='courses/modules',
-        verbose_name='Логотип модуля'
+        verbose_name='Логотип модуля',
+        blank=True,
     )
     lessons = models.ManyToManyField(
         Lesson,
@@ -90,6 +102,16 @@ class Module(models.Model):
     def __str__(self):
         return self.title
 
+    def ordered_lessons(self):
+        return Lesson.objects.filter(
+            lessonsinmodule__module=self,
+        ).order_by("lessonsinmodule__sequence_number")
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = unique_slug(Module, self.title, exclude_pk=self.pk)
+        super().save(*args, **kwargs)
+
 
 class Course(models.Model):
     level_choices = [
@@ -104,6 +126,7 @@ class Course(models.Model):
         unique=True,
         verbose_name='Название'
     )
+    slug = models.SlugField(max_length=120, unique=True, blank=True)
     description = models.TextField(
         verbose_name='Описание'
     )
@@ -113,7 +136,8 @@ class Course(models.Model):
     )
     image = models.ImageField(
         upload_to='courses',
-        verbose_name='Логотип курса'
+        verbose_name='Логотип курса',
+        blank=True,
     )
     duration = models.IntegerField(
         default=3,
@@ -150,16 +174,56 @@ class Course(models.Model):
     class Meta:
         verbose_name = 'Курс'
         verbose_name_plural = 'Курсы'
+        ordering = ["name"]
 
-    # def save(self, *args, **kwargs):
-    #     if not self.slug:
-    #         # Транслитерируем с русского → английский, затем слаг
-    #         transliterated = translit(self.name, 'ru', reversed=True)
-    #         self.slug = slugify(transliterated)
-    #     super().save(*args, **kwargs)
+    @property
+    def monthly_price(self):
+        """Ориентировочная стоимость в месяц (цена курса / длительность)."""
+        if self.duration and self.duration > 0:
+            return round(self.price / self.duration)
+        return self.price
+
+    @property
+    def is_free(self):
+        return self.price is None or self.price <= 0
+
+    def access_for(self, user):
+        """
+        Статус доступа пользователя к курсу:
+        'open'     — можно проходить;
+        'pending'  — заявка на рассмотрении;
+        'rejected' — заявка отклонена;
+        'none'     — доступа нет, можно записаться.
+        Бесплатные курсы открыты всем авторизованным.
+        """
+        if not (user and user.is_authenticated):
+            return 'none'
+        if self.is_free or user.is_superuser:
+            return 'open'
+        enrollment = self.enrollments.filter(user=user).first()
+        if enrollment is None:
+            return 'none'
+        return {
+            CourseEnrollment.Status.APPROVED: 'open',
+            CourseEnrollment.Status.PENDING: 'pending',
+            CourseEnrollment.Status.REJECTED: 'rejected',
+        }.get(enrollment.status, 'none')
+
+    def has_access(self, user):
+        return self.access_for(user) == 'open'
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = unique_slug(Course, self.name, exclude_pk=self.pk)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.name
+
+    def ordered_modules(self):
+        return Module.objects.filter(
+            modulesincourse__course=self,
+        ).order_by("modulesincourse__sequence_number")
 
 
 class ModulesInCourse(models.Model):
@@ -260,6 +324,20 @@ class Cohort(models.Model):
 
 
 class CourseEnrollment(models.Model):
+    """
+    Заявка/запись на курс.
+
+    Жизненный цикл: pending → approved/rejected.
+    Шаг одобрения — точка будущей интеграции эквайринга: вместо ручного
+    одобрения админом сюда встанет обработчик успешной оплаты
+    (см. CourseEnrollment.approve — его же будет вызывать платёжный вебхук).
+    """
+
+    class Status(models.TextChoices):
+        PENDING = "pending", "На рассмотрении"
+        APPROVED = "approved", "Одобрена"
+        REJECTED = "rejected", "Отклонена"
+
     user = models.ForeignKey(
         "users.CustomUser",
         on_delete=models.CASCADE,
@@ -269,16 +347,116 @@ class CourseEnrollment(models.Model):
     course = models.ForeignKey(
         Course,
         on_delete=models.CASCADE,
+        related_name="enrollments",
         verbose_name="Курс"
+    )
+    status = models.CharField(
+        max_length=10,
+        choices=Status.choices,
+        default=Status.PENDING,
+        verbose_name="Статус",
     )
     enrolled_at = models.DateTimeField(
         auto_now_add=True,
-        verbose_name="Куплен"
+        verbose_name="Заявка создана",
+    )
+    decided_at = models.DateTimeField(
+        null=True, blank=True,
+        verbose_name="Решение принято",
+    )
+    decided_by = models.ForeignKey(
+        "users.CustomUser",
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name="decided_enrollments",
+        verbose_name="Кто одобрил/отклонил",
     )
 
     class Meta:
         verbose_name = "Запись на курс"
         verbose_name_plural = "Записи на курсы"
+        ordering = ["-enrolled_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "course"], name="uniq_user_course_enrollment"
+            )
+        ]
 
     def __str__(self):
-        return f"{self.user} - {self.course}"
+        return f"{self.user} → {self.course} ({self.get_status_display()})"
+
+    @property
+    def is_approved(self):
+        return self.status == self.Status.APPROVED
+
+    @property
+    def is_pending(self):
+        return self.status == self.Status.PENDING
+
+    def approve(self, by=None):
+        """Одобрить заявку (точка подключения успешной оплаты)."""
+        self.status = self.Status.APPROVED
+        self.decided_at = timezone.now()
+        self.decided_by = by
+        self.save(update_fields=["status", "decided_at", "decided_by"])
+
+    def reject(self, by=None):
+        self.status = self.Status.REJECTED
+        self.decided_at = timezone.now()
+        self.decided_by = by
+        self.save(update_fields=["status", "decided_at", "decided_by"])
+
+
+class PracticeTask(models.Model):
+    """Практическое задание для песочницы, опционально привязанное к уроку."""
+
+    lesson = models.ForeignKey(
+        Lesson,
+        on_delete=models.CASCADE,
+        related_name="practice_tasks",
+        null=True,
+        blank=True,
+        verbose_name="Урок",
+    )
+    title = models.CharField("Заголовок", max_length=200)
+    statement = models.TextField(
+        "Условие",
+        help_text="Что нужно сделать. Поддерживается обычный текст.",
+    )
+    starter_code = models.TextField(
+        "Стартовый код",
+        blank=True,
+        default="",
+        help_text="Код, который подставится в редактор при выборе задания.",
+    )
+    expected_output = models.TextField(
+        "Ожидаемый вывод",
+        blank=True,
+        default="",
+        help_text=(
+            "Если заполнено — кнопка «Проверить» сравнит вывод программы "
+            "с этим значением (без учёта хвостовых пробелов)."
+        ),
+    )
+    position = models.PositiveIntegerField("Порядок", default=0)
+    created_by = models.ForeignKey(
+        "users.CustomUser",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="created_practice_tasks",
+        verbose_name="Автор",
+    )
+    created_at = models.DateTimeField("Создано", auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Практическое задание"
+        verbose_name_plural = "Практические задания"
+        ordering = ["position", "id"]
+
+    def __str__(self):
+        return self.title
+
+    @property
+    def has_check(self):
+        return bool(self.expected_output.strip())

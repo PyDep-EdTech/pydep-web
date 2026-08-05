@@ -3,12 +3,14 @@ version: '3.8'
 services:
   db:
     image: postgres:13.0-alpine
+    platform: linux/arm64
     volumes:
       - /var/lib/postgresql/data/
     env_file:
       - ./.env
   web:
-    image: jeniks/pyped_web:v0.0.5
+#    image: jeniks/pyped_web:v0.0.5
+    build: .
     restart: always
     volumes:
       - static_value:/app/static/
@@ -19,6 +21,7 @@ services:
       - ./.env
   nginx:
     image: nginx:1.21.3-alpine
+    platform: linux/arm64
     ports:
       - "80:80"
 
@@ -28,6 +31,7 @@ services:
       - static_value:/var/html/static/
 
       - media_value:/var/html/media/
+      - /root/pydep/infra/certs:/etc/certs:ro
 
     depends_on:
       - web

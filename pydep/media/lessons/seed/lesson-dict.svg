@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 260" role="img" aria-label="!;>20@L">
+  <rect width="720" height="260" rx="16" fill="#1E1E21"/>
+  <text x="360" y="32" text-anchor="middle" fill="#F1EFEA" font-size="18" font-weight="700">!;>20@L: :;NG � 7=0G5=85</text>
+  <rect x="100" y="55" width="200" height="45" rx="8" fill="#FFB020"/><text x="200" y="84" text-anchor="middle" fill="#1A1407" font-weight="600">name</text>
+  <text x="330" y="84" fill="#E2E0DA" font-size="20">�</text>
+  <rect x="360" y="55" width="260" height="45" rx="8" fill="#0a0f0d" stroke="#54D6B4"/><text x="490" y="84" text-anchor="middle" fill="#aff5b4" font-family="monospace">"!25B0"</text>
+  <rect x="100" y="115" width="200" height="45" rx="8" fill="#FFB020"/><text x="200" y="144" text-anchor="middle" fill="#1A1407" font-weight="600">email</text>
+  <text x="330" y="144" fill="#E2E0DA" font-size="20">�</text>
+  <rect x="360" y="115" width="260" height="45" rx="8" fill="#0a0f0d" stroke="#54D6B4"/><text x="490" y="144" text-anchor="middle" fill="#aff5b4" font-family="monospace">"sveta@mail.ru"</text>
+  <rect x="100" y="175" width="200" height="45" rx="8" fill="#FFB020"/><text x="200" y="204" text-anchor="middle" fill="#1A1407" font-weight="600">level</text>
+  <text x="330" y="204" fill="#E2E0DA" font-size="20">�</text>
+  <rect x="360" y="175" width="260" height="45" rx="8" fill="#0a0f0d" stroke="#54D6B4"/><text x="490" y="204" text-anchor="middle" fill="#aff5b4" font-family="monospace">"beginner"</text>
+</svg>

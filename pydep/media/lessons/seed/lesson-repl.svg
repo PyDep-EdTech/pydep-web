@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 300" role="img" aria-label="REPL">
+  <rect width="720" height="300" rx="16" fill="#1E1E21"/>
+  <rect x="40" y="30" width="640" height="240" rx="10" fill="#0d1117" stroke="#333" stroke-width="1"/>
+  <circle cx="62" cy="50" r="6" fill="#ff5f57"/><circle cx="82" cy="50" r="6" fill="#febc2e"/><circle cx="102" cy="50" r="6" fill="#28c840"/>
+  <text x="130" y="54" fill="#67665F" font-size="12">"5@<8=0;  python3</text>
+  <text x="60" y="90" fill="#989790" font-family="monospace" font-size="14">$ python3</text>
+  <text x="60" y="115" fill="#989790" font-family="monospace" font-size="13">Python 3.12.0 ...</text>
+  <text x="60" y="145" fill="#c9d1d9" font-family="monospace" font-size="14">&gt;&gt;&gt; 2 + 2</text>
+  <text x="60" y="168" fill="#aff5b4" font-family="monospace" font-size="14">4</text>
+  <text x="60" y="198" fill="#c9d1d9" font-family="monospace" font-size="14">&gt;&gt;&gt; print("@825B")</text>
+  <text x="60" y="221" fill="#aff5b4" font-family="monospace" font-size="14">@825B</text>
+  <text x="60" y="251" fill="#67665F" font-family="monospace" font-size="13">&gt;&gt;&gt; _  � :C@A>@ 64QB 22>4</text>
+</svg>

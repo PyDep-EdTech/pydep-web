@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none" role="img" aria-label="PyDep PD">
+  <defs>
+    <linearGradient id="g6" x1="0" y1="0" x2="120" y2="120" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#6d5efc"/>
+      <stop offset="1" stop-color="#3b9eff"/>
+    </linearGradient>
+    <mask id="m6">
+      <rect width="120" height="120" fill="#fff"/>
+      <!-- cut PD from filled square -->
+      <path fill="#000" d="M32 28h26c14.5 0 24 9.2 24 22.8 0 10.2-5.5 17.2-14.5 20.2L78 92H64L52.5 71H46V92H32V28zm12 12v19h12c6.5 0 10.5-3.6 10.5-9.5S62.5 40 56 40H44z"/>
+      <path fill="#000" d="M74 28h16c15.5 0 26.5 10.8 26.5 32S105.5 92 90 92H74V28zm12 12v52h4c10.2 0 16.5-7.2 16.5-26S100.2 40 90 40h-4z"/>
+    </mask>
+  </defs>
+  <rect width="120" height="120" rx="26" fill="url(#g6)" mask="url(#m6)"/>
+</svg>

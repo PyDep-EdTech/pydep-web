@@ -1,0 +1,267 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Python-песочница — PyDep{% endblock %}
+
+{% block body_class %}pg-body{% endblock %}
+
+{% block static %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/codemirror.min.css">
+<link href="{% static 'css/python-playground.css' %}?v=6" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="pg-mobile-gate">
+    <div class="pg-mobile-gate__card">
+        <div class="pg-mobile-gate__icon"><i class="bi bi-laptop"></i></div>
+        <h1>Песочница доступна на компьютере</h1>
+        <p>Редактор кода и интерпретатор Python требуют большого экрана и клавиатуры. Откройте эту страницу на компьютере или ноутбуке, чтобы писать и запускать код.</p>
+        <div class="pg-mobile-gate__actions">
+            <button type="button" class="btn btn-ghost" onclick="history.back()"><i class="bi bi-arrow-left me-1"></i>Назад</button>
+            <a href="{% url 'lesson:courses' %}" class="btn btn-primary"><i class="bi bi-book me-1"></i>К курсам</a>
+        </div>
+    </div>
+</div>
+<div class="pg-page" data-practice="{% if pg_tasks %}1{% else %}0{% endif %}">
+    {% csrf_token %}
+    <div id="pg-runner-host" class="pg-runner-host" hidden
+         data-runner-url="{% url 'lesson:python_playground_runner' %}"
+         data-check-url="{% url 'lesson:python_playground_check' %}"></div>
+    {{ pg_tasks|json_script:"pg-tasks-data" }}
+    <div class="container">
+        <header class="pg-hero reveal in">
+            <div class="pg-hero__text">
+                {% if pg_lesson_title %}<div class="pg-eyebrow"><i class="bi bi-mortarboard"></i> Практика к уроку «{{ pg_lesson_title }}»</div>{% endif %}
+                <h1 class="fw-bold">{% if pg_tasks %}Практика{% else %}Песочница{% endif %}</h1>
+                <p>{% if pg_tasks %}Выберите задание справа, решите его в редакторе и нажмите «Проверить».{% else %}Пишите код с подсветкой, смотрите вывод в терминале и пробуйте <code>input()</code> — без установки Python.{% endif %}</p>
+            </div>
+            <div class="pg-hero__meta reveal in" data-delay="80">
+                <div class="pg-hero__stat">
+                    <span class="pg-hero__stat-num">{% if pg_tasks %}1{% else %}0{% endif %}</span>
+                    <span class="pg-hero__stat-lbl">{% if pg_tasks %}запрос при проверке{% else %}запросов на сервер{% endif %}</span>
+                </div>
+                <div class="pg-hero__stat-sep"></div>
+                <div class="pg-hero__stat">
+                    <span class="pg-hero__stat-num">10с</span>
+                    <span class="pg-hero__stat-lbl">лимит выполнения</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="pg-layout">
+            <div class="pg-workspace reveal in" data-delay="100">
+                <div class="pg-studio">
+                    <div class="pg-studio__glow" aria-hidden="true"></div>
+
+                    <div class="pg-studio__chrome">
+                        <div class="pg-studio__dots" aria-hidden="true"><i></i><i></i><i></i></div>
+                        <div class="pg-studio__tabs">
+                            <span class="pg-studio__tab pg-studio__tab--active"><i class="bi bi-filetype-py"></i> main.py</span>
+                            <span class="pg-studio__tab pg-studio__tab--ghost"><i class="bi bi-terminal"></i> вывод</span>
+                        </div>
+                        <div class="pg-studio__actions">
+                            <span class="pg-status-pill" data-kind="loading">
+                                <span class="pg-status-pill__dot"></span>
+                                <span id="pg-status">Загрузка…</span>
+                            </span>
+                            <button type="button" class="pg-btn-icon" id="pg-clear" title="Очистить вывод">
+                                <i class="bi bi-eraser"></i>
+                            </button>
+                            <button type="button" class="pg-check-btn" id="pg-check" title="Сверить вывод с ожидаемым" hidden>
+                                <i class="bi bi-patch-check"></i>
+                                <span>Проверить</span>
+                            </button>
+                            <button type="button" class="pg-run-btn" id="pg-run">
+                                <i class="bi bi-play-fill"></i>
+                                <span>Запустить</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="pg-studio__panes">
+                        <div class="pg-pane pg-pane--editor">
+                            <div class="pg-pane__label">Редактор</div>
+                            <div class="pg-editor-wrap">
+                                <textarea id="pg-editor" spellcheck="false" aria-label="Редактор Python">print("Привет из песочницы PyDep!")
+
+name = input("Как вас зовут? ")
+print(f"Рад знакомству, {name}!")</textarea>
+                            </div>
+                            <details class="pg-stdin" id="pg-stdin-box">
+                                <summary class="pg-stdin__summary">
+                                    <i class="bi bi-keyboard"></i>
+                                    <span>Ввод для <code>input()</code></span>
+                                    <span class="pg-stdin__hint">по строке на каждый ответ</span>
+                                </summary>
+                                <textarea id="pg-stdin" class="pg-stdin__field" spellcheck="false" placeholder="Аня&#10;Москва"></textarea>
+                            </details>
+                        </div>
+
+                        <div class="pg-pane-resizer" aria-hidden="true"></div>
+
+                        <div class="pg-pane pg-pane--output">
+                            <div class="pg-pane__label">
+                                <span>Терминал</span>
+                                <span class="pg-pane__hint"><kbd>Ctrl</kbd><span>+</span><kbd>Enter</kbd></span>
+                            </div>
+                            <div id="pg-output" class="pg-output" aria-live="polite">
+                                <div class="pg-output__placeholder">
+                                    <i class="bi bi-chevron-right"></i>
+                                    <span>Ожидание запуска…</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pg-studio__foot">
+                        <span><i class="bi bi-cpu"></i> Настоящий Python 3 (Pyodide)</span>
+                        <span class="pg-studio__foot-sep">·</span>
+                        <span><i class="bi bi-shield-check"></i> Код в изолированном iframe</span>
+                        <span class="pg-studio__foot-sep">·</span>
+                        <span><kbd>Tab</kbd> — отступ</span>
+                    </div>
+                </div>
+            </div>
+
+            <aside class="pg-sidebar reveal in" data-delay="150">
+                <div class="pg-side-card pg-tasks-card" id="pg-tasks-card" hidden>
+                    <div class="pg-tasks-card__head">
+                        <h2 class="pg-side-card__title"><i class="bi bi-list-task"></i> Задания</h2>
+                        <span class="pg-progress-count" id="pg-progress-count">0 / 0</span>
+                    </div>
+                    <div class="pg-progress" aria-hidden="true"><span class="pg-progress__bar" id="pg-progress-bar"></span></div>
+                    <div class="pg-tasks-list" id="pg-tasks-list"></div>
+                    <div class="pg-all-done" id="pg-all-done" hidden>
+                        <i class="bi bi-trophy-fill"></i>
+                        <strong>Все задания решены!</strong>
+                        <span>Отличная работа 🎉</span>
+                    </div>
+                </div>
+
+                <div class="pg-side-card pg-current-task" id="pg-current-task" hidden>
+                    <div class="pg-current-task__head">
+                        <span class="pg-current-task__badge" id="pg-task-num">Задание 1</span>
+                        <button type="button" class="pg-btn-link" id="pg-task-reset"><i class="bi bi-arrow-counterclockwise"></i> Сбросить код</button>
+                    </div>
+                    <h3 class="pg-current-task__title" id="pg-task-title"></h3>
+                    <div class="pg-current-task__statement" id="pg-task-statement"></div>
+                    <div class="pg-current-task__result" id="pg-task-result" hidden></div>
+                    <button type="button" class="pg-next-btn" id="pg-task-next" hidden>
+                        Следующее задание <i class="bi bi-arrow-right"></i>
+                    </button>
+                </div>
+
+                <div class="pg-side-card" id="pg-examples-card">
+                    <h2 class="pg-side-card__title">Быстрые примеры</h2>
+                    <p class="pg-side-card__lead">Нажмите — код подставится в редактор</p>
+                    <div class="pg-examples">
+                        <button type="button" class="pg-example-btn" data-example="print(&quot;Привет, мир!&quot;)
+for i in range(3):
+    print(f&quot;Шаг {i + 1}&quot;)">
+                            <span class="pg-example-btn__icon"><i class="bi bi-arrow-repeat"></i></span>
+                            <span class="pg-example-btn__body">
+                                <strong>Цикл for</strong>
+                                <small>range и f-строки</small>
+                            </span>
+                        </button>
+                        <button type="button" class="pg-example-btn" data-example="usd = 100
+rate = 92.5
+print(f&quot;{usd} USD = {usd * rate:.2f} RUB&quot;)">
+                            <span class="pg-example-btn__icon"><i class="bi bi-currency-exchange"></i></span>
+                            <span class="pg-example-btn__body">
+                                <strong>Конвертер валют</strong>
+                                <small>переменные и print</small>
+                            </span>
+                        </button>
+                        <button type="button" class="pg-example-btn" data-example="scores = [88, 74, 91, 55]
+passed = [s for s in scores if s >= 60]
+print(&quot;Сдали:&quot;, passed)
+print(&quot;Средний:&quot;, sum(scores) / len(scores))">
+                            <span class="pg-example-btn__icon"><i class="bi bi-list-check"></i></span>
+                            <span class="pg-example-btn__body">
+                                <strong>Списки</strong>
+                                <small>comprehension</small>
+                            </span>
+                        </button>
+                        <button type="button" class="pg-example-btn" data-example="def greet(name, city=&quot;Москва&quot;):
+    return f&quot;Привет, {name} из {city}!&quot;
+
+print(greet(&quot;Аня&quot;))
+print(greet(&quot;Борис&quot;, &quot;Казань&quot;))">
+                            <span class="pg-example-btn__icon"><i class="bi bi-braces"></i></span>
+                            <span class="pg-example-btn__body">
+                                <strong>Функции</strong>
+                                <small>def и return</small>
+                            </span>
+                        </button>
+                        <button type="button" class="pg-example-btn" data-example="import random
+
+rolls = [random.randint(1, 6) for _ in range(5)]
+print(&quot;Броски кубика:&quot;, rolls)
+print(&quot;Сумма:&quot;, sum(rolls))
+print(&quot;Максимум:&quot;, max(rolls))">
+                            <span class="pg-example-btn__icon"><i class="bi bi-dice-5"></i></span>
+                            <span class="pg-example-btn__body">
+                                <strong>Случайные числа</strong>
+                                <small>import random</small>
+                            </span>
+                        </button>
+                        <button type="button" class="pg-example-btn" data-example="class Cat:
+    def __init__(self, name):
+        self.name = name
+
+    def say(self):
+        return f&quot;{self.name}: мяу!&quot;
+
+cat = Cat(&quot;Барсик&quot;)
+print(cat.say())">
+                            <span class="pg-example-btn__icon"><i class="bi bi-diagram-3"></i></span>
+                            <span class="pg-example-btn__body">
+                                <strong>Классы</strong>
+                                <small>ООП в Python</small>
+                            </span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="pg-side-card pg-side-card--dim">
+                    <h3 class="pg-side-card__subtitle">Что внутри</h3>
+                    <ul class="pg-limits-list">
+                        <li>Настоящий <strong>CPython 3.12</strong> (WebAssembly)</li>
+                        <li>Стандартная библиотека: <code>math</code>, <code>random</code>, <code>json</code>, <code>datetime</code>, <code>itertools</code>…</li>
+                        <li>Классы, исключения, реальные трейсбеки</li>
+                        <li>Без доступа к cookies и DOM сайта</li>
+                        <li>Цикл дольше 10 с будет остановлен</li>
+                    </ul>
+                </div>
+            </aside>
+        </div>
+    </div>
+</div>
+
+<div id="pg-input-modal" class="pg-modal" role="dialog" aria-modal="true" aria-labelledby="pg-input-title" hidden>
+    <div class="pg-modal__backdrop"></div>
+    <div class="pg-modal__card">
+        <div class="pg-modal__head">
+            <i class="bi bi-keyboard"></i>
+            <span id="pg-input-title">Программа ждёт ввод</span>
+        </div>
+        <label id="pg-input-label" class="pg-modal__label" for="pg-input-field"></label>
+        <input id="pg-input-field" class="pg-modal__input" type="text" autocomplete="off" />
+        <div class="pg-modal__actions">
+            <button type="button" class="btn btn-primary btn-sm" id="pg-input-submit">
+                <i class="bi bi-arrow-return-left me-1"></i>Ввести
+            </button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/addon/edit/matchbrackets.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/addon/edit/closebrackets.min.js"></script>
+<script src="{% static 'js/python-playground.js' %}?v=6"></script>
+{% endblock %}

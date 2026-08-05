@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block body_class %}studio-page{% endblock %}
+
+{% block static %}
+<link href="{% static 'css/studio.css' %}" rel="stylesheet"/>
+{{ block.super }}
+{% endblock %}
+
+{% block content %}
+<div class="studio-shell {% if course %}studio-shell--with-sidebar{% endif %}">
+    {% if course %}
+        {% include 'course_editor/includes/studio_sidebar.html' %}
+    {% endif %}
+    <div class="studio-main">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} mb-3">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+        {% block studio_content %}{% endblock %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/studio.js' %}"></script>
+{% block studio_scripts %}{% endblock %}
+{% endblock %}

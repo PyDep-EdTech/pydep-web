@@ -1,0 +1,7 @@
+{% extends 'base.html' %}
+
+{% block title %}Страница не найдена — PyDep{% endblock %}
+
+{% block content %}
+{% include 'includes/error_page.html' with code='404' icon='compass' title='Страница не найдена' message='Такого адреса на PyDep нет. Возможно, ссылка устарела или страница была перемещена.' show_courses=True %}
+{% endblock %}

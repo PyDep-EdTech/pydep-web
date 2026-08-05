@@ -1,332 +1,59 @@
-{% extends 'base.html' %}
+{% extends 'course_editor/base_studio.html' %}
 {% load static %}
 
-{% block title %}Редактор курсов{% endblock %}
+{% block title %}Мои курсы — Студия{% endblock %}
 
-{% block static %}
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        .course-card {
-            border-radius: 15px;
-            overflow: hidden;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            margin-bottom: 20px;
-            background-color: #ffffff;
-            opacity: 0;
-            transform: translateY(20px);
-            animation: fadeInUp 0.6s ease forwards;
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-        }
+{% block studio_content %}
+<nav class="studio-breadcrumbs">
+    <a href="{% url 'studio:main' %}">Студия</a>
+    <span class="sep">/</span>
+    <span>Мои курсы</span>
+</nav>
 
-        .course-card[data-delay] {
-            animation-delay: calc(var(--delay-index) * 0.1s);
-        }
-
-        .course-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
-        }
-
-        .course-content {
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            height: 100%;
-        }
-
-        .course-title {
-            font-size: 1.25rem;
-            font-weight: bold;
-            min-height: 3.6em;
-            line-height: 1.2;
-        }
-
-        .course-meta {
-            font-size: 0.75rem;
-            color: #6c757d;
-            margin-bottom: 8px;
-        }
-
-        .course-image-wrapper {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 140px;
-            margin-bottom: 20px;
-        }
-
-        .course-image-wrapper img {
-            max-height: 100%;
-            max-width: 100%;
-            object-fit: contain;
-        }
-
-        .btn-course-detail {
-            border-radius: 15px;
-            margin-top: auto;
-        }
-
-        .empty-message {
-            max-width: 600px;
-            margin: 80px auto;
-            padding: 40px;
-            text-align: center;
-            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-            border-radius: 20px;
-            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.05);
-            font-size: 1.3rem;
-            color: #495057;
-            animation: fadeInUp 0.8s ease both;
-        }
-
-        .row.gy-4 > [class*='col-'] {
-            margin-bottom: 1.5rem;
-        }
-
-        .filters-section {
-            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-            border-radius: 20px;
-            padding: 30px;
-            margin-bottom: 40px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-        }
-
-        .category-filters {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            margin-bottom: 25px;
-        }
-
-        .category-filter-item {
-            position: relative;
-        }
-
-        .category-filter-item input[type="checkbox"] {
-            position: absolute;
-            opacity: 0;
-            cursor: pointer;
-            height: 0;
-            width: 0;
-        }
-
-        .category-filter-label {
-            display: inline-block;
-            padding: 12px 24px;
-            font-size: 0.95rem;
-            font-weight: 500;
-            color: #495057;
-            background: #ffffff;
-            border: 2px solid #e9ecef;
-            border-radius: 50px;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            user-select: none;
-            white-space: nowrap;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-        }
-
-        .category-filter-label:hover {
-            border-color: #6c757d;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        }
-
-        .category-filter-item input[type="checkbox"]:checked + .category-filter-label {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: #ffffff;
-            border-color: transparent;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-            transform: translateY(-2px);
-        }
-
-        .category-filter-item input[type="checkbox"]:checked + .category-filter-label:hover {
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
-            transform: translateY(-3px);
-        }
-
-        .reset-filters-btn {
-            padding: 12px 24px;
-            font-size: 0.95rem;
-            font-weight: 500;
-            color: #6c757d;
-            background: #ffffff;
-            border: 2px solid #e9ecef;
-            border-radius: 50px;
-            text-decoration: none;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-        }
-
-        .reset-filters-btn:hover {
-            background: #f8f9fa;
-            border-color: #dee2e6;
-            color: #495057;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        }
-
-        .search-wrapper {
-            position: relative;
-            margin-bottom: 0;
-        }
-
-        .search-input {
-            padding: 16px 20px;
-            padding-left: 50px;
-            font-size: 1rem;
-            border: 2px solid #e9ecef;
-            border-radius: 50px;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            background: #ffffff;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-        }
-
-        .search-input:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
-            transform: translateY(-2px);
-        }
-
-        .search-icon {
-            position: absolute;
-            left: 18px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #6c757d;
-            font-size: 1.1rem;
-            pointer-events: none;
-        }
-
-        .search-btn {
-            position: absolute;
-            right: 8px;
-            top: 50%;
-            transform: translateY(-50%);
-            padding: 10px 24px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border: none;
-            border-radius: 50px;
-            color: #ffffff;
-            font-weight: 500;
-            font-size: 0.95rem;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 2px 10px rgba(102, 126, 234, 0.3);
-        }
-
-        .search-btn:hover {
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-            transform: translateY(-50%) translateY(-2px);
-        }
-
-        .search-btn:active {
-            transform: translateY(-50%) translateY(0);
-        }
-
-        .filters-title {
-            font-size: 1.3rem;
-            font-weight: 600;
-            color: #212529;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .filters-title::before {
-
-            font-size: 1.2rem;
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* Общий стиль для бейджа */
-.status-badge {
-    display: inline-flex;
-    align-items: center;
-    padding: 3px 10px;
-    border-radius: 20px;
-    font-size: 0.7rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
-    white-space: nowrap;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.08);
-}
-
-.status-published {
-    background-color: #e6f7ee;
-    color: #059669;
-    border: 1px solid #a7f3d0;
-}
-
-.status-draft {
-    background-color: #fef2f2;
-    color: #dc2626;
-    border: 1px solid #fecaca;
-}
-
-/* Опционально: иконки FontAwesome (если не подключены) — можно заменить на SVG или убрать */
-/* Если используешь Bootstrap Icons, замени иконки на: -->
-<!-- <i class="bi bi-check-circle-fill me-1"></i> / <i class="bi bi-file-earmark-text-fill me-1"></i> -->
-    </style>
-{% endblock %}
-
-{% block content %}
-    <div class="container py-4">
-
-
-        <div class="row gy-4">
-            {% for course in courses %}
-                <div class="col-md-6 col-lg-4 col-xl-3 d-flex">
-    <div class="course-card w-100" data-delay style="--delay-index: {{ forloop.counter0 }};">
-        <div class="course-content">
-            <!-- Статус — в потоке, как часть контента -->
-            <div class="d-flex justify-content-end mb-2">
-                <span class="status-badge {% if course.is_published %}status-published{% else %}status-draft{% endif %}">
-                    {% if course.is_published %}
-                        <i class="fas fa-check-circle me-1"></i>Опубликован
-                    {% else %}
-                        <i class="fas fa-eye-slash me-1"></i>Скрыт
-                    {% endif %}
-                </span>
-            </div>
-
-            <div class="course-title mb-3">{{ course.name }}</div>
-            <div class="course-image-wrapper">
-                <img src="{{ course.image.url }}" alt="{{ course.name }}" class="img-fluid">
-            </div>
-
-            <a href="{% url 'studio:course_edit' course.id %}"
-               class="btn btn-outline-primary btn-course-detail mt-3">Редактировать</a>
-        </div>
+<div class="studio-page-head">
+    <div>
+        <h1>Мои курсы</h1>
+        <p>Управление и редактирование ваших курсов</p>
     </div>
+    <a href="{% url 'studio:course_create' %}" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-2"></i>Создать курс
+    </a>
 </div>
-            {% empty %}
-                <div class="empty-message">
-                    <p class="mb-0">Пока что курсы не добавлены.<br>Пожалуйста, загляните позже или свяжитесь с
-                        администратором.</p>
-                </div>
-            {% endfor %}
+
+{% if courses %}
+<div class="studio-courses-grid">
+    {% for course in courses %}
+    <article class="studio-course-card reveal">
+        <div class="studio-course-card__img">
+            <img src="{% if course.image %}{{ course.image.url }}{% else %}{% static 'img/pydep.svg' %}{% endif %}" alt="{{ course.name }}">
+            <span class="studio-course-card__status status-badge {% if course.is_published %}status-published{% else %}status-draft{% endif %}">
+                {% if course.is_published %}Опубликован{% else %}Черновик{% endif %}
+            </span>
         </div>
-    </div>
-    </div>
+        <div class="studio-course-card__body">
+            <div class="studio-course-card__title">{{ course.name }}</div>
+            <div class="studio-course-card__stats">
+                <span><i class="bi bi-layers"></i>{{ course.module_count }} мод.</span>
+                <span class="studio-course-card__stats-sep">·</span>
+                <span><i class="bi bi-journal-text"></i>{{ course.lesson_count }} урок.</span>
+            </div>
+            <div class="studio-course-card__actions">
+                <a href="{% url 'studio:course_edit' course.id %}" class="btn btn-primary btn-sm">
+                    <i class="bi bi-pencil-square"></i> Редактировать
+                </a>
+                <a href="{% url 'lesson:course_detail' course.slug %}" class="btn btn-ghost btn-sm studio-course-card__preview" target="_blank" rel="noopener" title="Предпросмотр">
+                    <i class="bi bi-box-arrow-up-right"></i>
+                </a>
+            </div>
+        </div>
+    </article>
+    {% endfor %}
+</div>
+{% else %}
+<div class="studio-sortable__empty" style="margin-top:2rem;">
+    <i class="bi bi-collection d-block mb-3" style="font-size:2.4rem;color:var(--brand);"></i>
+    Курсы ещё не созданы.<br>
+    <a href="{% url 'studio:course_create' %}" class="btn btn-primary mt-3">Создать первый курс</a>
+</div>
+{% endif %}
 {% endblock %}
