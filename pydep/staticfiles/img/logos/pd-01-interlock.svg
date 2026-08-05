@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none" role="img" aria-label="PyDep PD">
+  <defs>
+    <linearGradient id="g1" x1="18" y1="12" x2="102" y2="108" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8b7bff"/>
+      <stop offset="1" stop-color="#3b9eff"/>
+    </linearGradient>
+  </defs>
+  <rect width="120" height="120" rx="28" fill="#12121a"/>
+  <!-- P -->
+  <path d="M34 28h28c15.5 0 26 9.8 26 24.2S77.5 76.5 62 76.5H48V92H34V28zm14 14v24.5h14c7.8 0 12.5-4.6 12.5-12.2S69.8 42 62 42H48z" fill="url(#g1)"/>
+  <!-- D shares vertical bar with P -->
+  <path d="M72 28h18c17.2 0 30 12.4 30 32s-12.8 32-30 32H72V28zm14 14v36h4c9.4 0 15.5-6.8 15.5-18S99.4 42 90 42h-4z" fill="#fff" fill-opacity=".96"/>
+</svg>

@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="light">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="theme-color" content="#F4F1EA">
+    <title>Технические работы — PyDep</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            color-scheme: light;
+            --brand: #C98500;
+            --bg: #F4F1EA;
+            --surface: #FFFFFF;
+            --border: rgba(22, 20, 15, 0.10);
+            --border-strong: rgba(22, 20, 15, 0.16);
+            --text: #2B2720;
+            --text-muted: #6E685B;
+            --heading: #16140F;
+            --shadow: 0 1px 3px rgba(22, 20, 15, .06), 0 16px 48px -12px rgba(22, 20, 15, .12);
+            --grad-brand: linear-gradient(100deg, #E8A020, #C98500 55%, #FF9D2E);
+        }
+
+        *, *::before, *::after { box-sizing: border-box; }
+
+        html, body {
+            margin: 0;
+            min-height: 100%;
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', system-ui, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(60rem 40rem at -5% -5%, rgba(201, 133, 0, .09), transparent 60%),
+                radial-gradient(50rem 36rem at 108% 5%, rgba(232, 160, 32, .08), transparent 58%),
+                radial-gradient(50rem 40rem at 50% 115%, rgba(255, 157, 46, .06), transparent 60%);
+            pointer-events: none;
+        }
+
+        .wrap {
+            position: relative;
+            z-index: 1;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            padding: 48px 20px 64px;
+        }
+
+        .container {
+            width: min(1120px, 100%);
+            margin: 0 auto;
+        }
+
+        .hero-grid {
+            display: grid;
+            grid-template-columns: 1.05fr .95fr;
+            gap: 56px;
+            align-items: center;
+        }
+
+        @media (max-width: 900px) {
+            .hero-grid { grid-template-columns: 1fr; gap: 38px; }
+        }
+
+        .brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 28px;
+            font: 800 1.1rem 'Bricolage Grotesque', sans-serif;
+            color: var(--heading);
+            letter-spacing: -.02em;
+        }
+
+        .brand-mark {
+            width: 36px;
+            height: 36px;
+            border-radius: 11px;
+            background: var(--grad-brand);
+            display: grid;
+            place-items: center;
+            color: #1A1407;
+            font-weight: 800;
+            font-size: .95rem;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 14px;
+            border-radius: 999px;
+            border: 1px solid rgba(201, 133, 0, .22);
+            background: rgba(201, 133, 0, .08);
+            color: var(--brand);
+            font-size: .82rem;
+            font-weight: 600;
+            margin-bottom: 22px;
+        }
+
+        .status-pill__dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--brand);
+            animation: pulse 1.8s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: .45; transform: scale(.85); }
+        }
+
+        h1 {
+            font-family: 'Bricolage Grotesque', sans-serif;
+            font-size: clamp(2.4rem, 5.5vw, 4.2rem);
+            line-height: 1.02;
+            letter-spacing: -.035em;
+            font-weight: 800;
+            color: var(--heading);
+            margin: 0 0 1.2rem;
+        }
+
+        h1 em {
+            font-style: normal;
+            color: var(--brand);
+        }
+
+        .lead {
+            font-size: 1.12rem;
+            line-height: 1.6;
+            color: var(--text-muted);
+            max-width: 32rem;
+            margin: 0 0 1.8rem;
+        }
+
+        .meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 24px;
+            color: var(--text-muted);
+            font-size: .92rem;
+        }
+
+        .meta strong {
+            display: block;
+            color: var(--heading);
+            font-family: 'Bricolage Grotesque', sans-serif;
+            font-size: 1.35rem;
+            margin-bottom: 2px;
+        }
+
+        .terminal {
+            background: #15140F;
+            border: 1px solid rgba(22, 20, 15, 0.12);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            transform: rotate(.35deg);
+        }
+
+        .terminal__bar {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            padding: 13px 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, .08);
+        }
+
+        .terminal__bar i {
+            width: 11px;
+            height: 11px;
+            border-radius: 50%;
+        }
+
+        .terminal__bar i:nth-child(1) { background: #ff5f57; }
+        .terminal__bar i:nth-child(2) { background: #febc2e; }
+        .terminal__bar i:nth-child(3) { background: #28c840; }
+
+        .terminal__name {
+            margin-left: 10px;
+            font: 600 .78rem ui-monospace, 'SF Mono', Menlo, monospace;
+            color: #6E685B;
+        }
+
+        .terminal__body {
+            min-height: 280px;
+            padding: 20px 22px 24px;
+            font: 400 .92rem/1.75 ui-monospace, 'SF Mono', Menlo, monospace;
+            color: #d6d0c2;
+        }
+
+        .ln { display: block; white-space: pre-wrap; min-height: 1.75em; }
+        .ln--empty { min-height: .6em; }
+        .tk-kw { color: #E8A020; }
+        .tk-fn { color: #54D6B4; }
+        .tk-str { color: #b6e08a; }
+        .tk-com { color: #6E685B; }
+        .tk-ok { color: #54D6B4; }
+        .tk-prompt { color: #989790; }
+
+        .term-cursor {
+            display: inline-block;
+            width: 8px;
+            height: 1.05em;
+            background: #E8A020;
+            vertical-align: -2px;
+            animation: blink 1.1s steps(1) infinite;
+        }
+
+        @keyframes blink { 50% { opacity: 0; } }
+
+        .foot {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            padding: 0 20px 28px;
+            color: var(--text-muted);
+            font-size: .85rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <div class="container hero-grid">
+            <div>
+                <div class="brand">
+                    <span class="brand-mark">Py</span>
+                    PyDep
+                </div>
+                <div class="status-pill">
+                    <span class="status-pill__dot"></span>
+                    Сервис временно недоступен
+                </div>
+                <h1>Ведутся<br><em>технические работы</em></h1>
+                <p class="lead">
+                    Мы обновляем платформу, чтобы вам было ещё удобнее учиться.
+                    Сайт скоро вернётся — спасибо за терпение.
+                </p>
+                <div class="meta">
+                    <div><strong>~30 мин</strong>обычное время</div>
+                    <div><strong>503</strong>статус сервиса</div>
+                    <div><strong>pydep.ru</strong>скоро online</div>
+                </div>
+            </div>
+
+            <div class="hero-art">
+                <div class="terminal" aria-label="Терминал с ходом работ">
+                    <div class="terminal__bar">
+                        <i></i><i></i><i></i>
+                        <span class="terminal__name">maintenance.py</span>
+                    </div>
+                    <div class="terminal__body" id="terminal"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="foot">PyDep · образовательная платформа</footer>
+
+    <script>
+    (function () {
+        var terminal = document.getElementById('terminal');
+        if (!terminal) return;
+
+        var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        var scriptLines = [
+            { html: '<span class="tk-com"># deploy/maintenance.py</span>', delay: 400 },
+            { html: '<span class="tk-kw">from</span> pydep <span class="tk-kw">import</span> platform', delay: 55 },
+            { html: '', delay: 120, empty: true },
+            { html: '<span class="tk-kw">def</span> <span class="tk-fn">upgrade</span>():', delay: 55 },
+            { html: '    platform.notify(<span class="tk-str">"maintenance_mode"</span>)', delay: 45 },
+            { html: '    platform.migrate()', delay: 45 },
+            { html: '    platform.collectstatic()', delay: 45 },
+            { html: '    <span class="tk-kw">return</span> platform.restart()', delay: 55 },
+            { html: '', delay: 180, empty: true },
+            { html: '<span class="tk-prompt">&gt;&gt;&gt;</span> upgrade()', delay: 70 },
+            { html: '<span class="tk-ok">Applying migrations... OK</span>', delay: 650 },
+            { html: '<span class="tk-ok">Collecting static... OK</span>', delay: 550 },
+            { html: '<span class="tk-ok">Restarting services... OK</span>', delay: 500 },
+            { html: '', delay: 220, empty: true },
+            { html: '<span class="tk-prompt">&gt;&gt;&gt;</span> print(<span class="tk-str">"</span><span id="typed-msg"></span><span class="term-cursor" id="cursor"></span><span class="tk-str">"</span>)', delay: 80, typed: true },
+        ];
+
+        var message = 'Ведутся технические работы';
+        var lineIdx = 0;
+        var charIdx = 0;
+        var currentLine = null;
+
+        function sleep(ms) {
+            return new Promise(function (resolve) { setTimeout(resolve, ms); });
+        }
+
+        function appendLine() {
+            var el = document.createElement('span');
+            el.className = 'ln';
+            terminal.appendChild(el);
+            return el;
+        }
+
+        async function showLine(lineEl, html, pause) {
+            lineEl.innerHTML = html;
+            await sleep(pause);
+        }
+
+        async function typeMessage(target) {
+            if (reduced) {
+                target.textContent = message;
+                return;
+            }
+            for (var i = 0; i <= message.length; i++) {
+                target.textContent = message.slice(0, i);
+                await sleep(85 + Math.random() * 35);
+            }
+        }
+
+        async function run() {
+            for (var i = 0; i < scriptLines.length; i++) {
+                var item = scriptLines[i];
+                var line = appendLine();
+                if (item.empty) {
+                    line.className = 'ln ln--empty';
+                    await sleep(item.delay);
+                    continue;
+                }
+                if (item.typed) {
+                    line.innerHTML = item.html;
+                    var target = line.querySelector('#typed-msg');
+                    await sleep(item.delay);
+                    await typeMessage(target);
+                    return;
+                }
+                await showLine(line, item.html, item.delay);
+            }
+        }
+
+        run();
+    })();
+    </script>
+</body>
+</html>

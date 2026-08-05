@@ -3,30 +3,464 @@
 
 {% block title %}{{ title }}{% endblock %}
 
-{% block content %}
-<section class="py-5">
-  <div class="container px-5">
-    <h1 class="fw-bold mb-4"><span class="text-danger">{{ title }}</span></h1>
-    <form method="post" class="card p-4 shadow-sm">
-      {% csrf_token %}
-      <div class="row g-3">
-        {% for field in form %}
-          <div class="col-12 col-md-6">
-            <label class="form-label">{{ field.label }}</label>
-            {{ field }}
-            {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
-            {% for error in field.errors %}
-              <div class="invalid-feedback d-block">{{ error }}</div>
-            {% endfor %}
-          </div>
-        {% endfor %}
-      </div>
-      <div class="d-flex gap-2 mt-4">
-        <button type="submit" class="btn btn-danger">Сохранить</button>
-        <a href="{% url 'tutor:schedule' %}" class="btn btn-outline-secondary">Отмена</a>
-      </div>
-    </form>
-  </div>
-</section>
+{% block static %}
+<style>
+    .lesson-editor { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, .9fr); gap: 30px; align-items: start; }
+    @media (max-width: 980px) { .lesson-editor { grid-template-columns: 1fr; } }
+    .lesson-editor__aside { position: sticky; top: 92px; }
+    @media (max-width: 980px) { .lesson-editor__aside { position: static; order: -1; } }
+
+    .lesson-editor__aside-label {
+        font-size: .72rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase;
+        color: var(--text-dim); margin: 0 0 .8rem .2rem;
+    }
+
+    /* ── Live lesson ticket ── */
+    .lesson-ticket {
+        position: relative; border-radius: 22px; overflow: hidden;
+        background:
+            radial-gradient(26rem 14rem at 100% -10%, rgba(255,176,32,.12), transparent 60%),
+            var(--surface);
+        border: 1px solid var(--border-strong);
+        box-shadow: var(--shadow);
+    }
+    .lesson-ticket__head {
+        display: flex; align-items: center; justify-content: space-between; gap: 10px;
+        padding: 16px 20px;
+    }
+    .lt-chip {
+        display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 999px;
+        font-size: .74rem; font-weight: 700; background: var(--surface-2); border: 1px solid var(--border);
+        color: var(--text-muted);
+    }
+    .lt-chip i { color: var(--brand); }
+    .lt-status { font-size: .72rem; font-weight: 700; padding: 5px 11px; border-radius: 999px; }
+    .lt-status[data-s="scheduled"] { background: rgba(255,176,32,.16); color: #f1b53d; }
+    .lt-status[data-s="completed"] { background: rgba(84,214,180,.16); color: #54D6B4; }
+    .lt-status[data-s="canceled"]  { background: rgba(255,255,255,.06); color: var(--text-dim); }
+
+    .lesson-ticket__body { padding: 6px 22px 4px; }
+    .lt-subject {
+        font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; letter-spacing: -.02em;
+        font-size: 1.6rem; line-height: 1.1; color: var(--heading); margin-bottom: 14px; word-break: break-word;
+    }
+    .lt-subject.is-empty { color: var(--text-dim); font-weight: 600; }
+    .lt-student { display: flex; align-items: center; gap: 11px; padding: 10px 0 16px; }
+    .lt-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; background: var(--surface-2); border: 1px solid var(--border); }
+    .lt-student__name { font-weight: 700; color: var(--heading); line-height: 1.1; }
+    .lt-student__sub { font-size: .8rem; color: var(--text-muted); }
+
+    .lt-when { display: grid; grid-template-columns: auto 1fr; gap: 14px; align-items: center; padding-bottom: 18px; }
+    .lt-date { text-align: center; min-width: 58px; padding: 8px 0; border-radius: 14px; background: var(--surface-2); border: 1px solid var(--border); }
+    .lt-date__d { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 1.5rem; line-height: 1; color: var(--heading); }
+    .lt-date__m { font-size: .68rem; text-transform: uppercase; letter-spacing: .1em; color: var(--text-muted); margin-top: 3px; }
+    .lt-time { font-weight: 700; color: var(--heading); font-size: 1.05rem; }
+    .lt-time__dur { font-size: .82rem; font-weight: 600; color: var(--brand); margin-top: 3px; }
+
+    /* perforated divider */
+    .lt-perf { position: relative; height: 0; border-top: 2px dashed var(--border-strong); margin: 0 22px; }
+    .lt-perf::before, .lt-perf::after {
+        content: ""; position: absolute; top: -11px; width: 22px; height: 22px; border-radius: 50%;
+        background: var(--bg); border: 1px solid var(--border-strong);
+    }
+    .lt-perf::before { left: -33px; }
+    .lt-perf::after { right: -33px; }
+
+    .lesson-ticket__foot { padding: 18px 22px 20px; display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; }
+    .lt-cost__label { font-size: .74rem; text-transform: uppercase; letter-spacing: .12em; color: var(--text-dim); }
+    .lt-cost__val { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 1.9rem; line-height: 1; color: var(--brand); }
+    .lt-cost__val small { font-size: .9rem; color: var(--text-muted); font-weight: 600; }
+    .lt-brand { font-size: .72rem; font-weight: 700; letter-spacing: .04em; color: var(--text-dim); display: inline-flex; align-items: center; gap: 5px; }
+
+    .lesson-editor__hint {
+        margin: 14px 4px 0; font-size: .82rem; color: var(--text-dim); line-height: 1.5;
+        display: flex; gap: 8px;
+    }
+    .lesson-editor__hint i { color: var(--brand); margin-top: .1rem; }
+
+    /* keep form column readable */
+    .lesson-editor__main .lesson-form-page { max-width: none; }
+</style>
 {% endblock %}
 
+{% block content %}
+<section class="py-5">
+  <div class="container tutor-page lesson-form-page" style="max-width: 1120px;">
+    {% url 'tutor:schedule' as back_url %}
+    {% include 'course_editor/includes/back_button.html' with back_label="Назад к расписанию" %}
+
+    <div class="lesson-form-header">
+      <h1 class="fw-bold"><span class="text-gradient">{{ title }}</span></h1>
+      <p>
+        {% if form.instance.pk %}
+          Измените параметры занятия — превью справа обновляется вживую.
+        {% else %}
+          Заполняйте блоки слева — карточка занятия собирается справа в реальном времени.
+        {% endif %}
+      </p>
+    </div>
+
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} mb-4">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+
+    {% if form.non_field_errors %}
+      <div class="alert alert-danger mb-4">
+        {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+      </div>
+    {% endif %}
+
+    <div class="lesson-editor">
+      <div class="lesson-editor__main">
+        <form method="post" class="lesson-form" novalidate id="lessonForm">
+          {% csrf_token %}
+
+          {# ── 1. Участники ── #}
+          <section class="lesson-form-section">
+            <div class="lesson-form-section__head">
+              <div class="lesson-form-section__icon"><i class="bi bi-people-fill"></i></div>
+              <h2 class="lesson-form-section__title">Участники</h2>
+            </div>
+            <div class="row g-3">
+              <div class="col-12 col-md-6 lesson-field student-picker-field">
+                <label class="form-label">
+                  <i class="bi bi-person me-1 opacity-75"></i>Ученик<span class="text-danger ms-1">*</span>
+                </label>
+                {{ form.student }}
+                {% if teacher_students %}
+                  <button type="button" class="student-picker-trigger" id="lessonStudentTrigger" aria-haspopup="dialog">
+                    <div id="lessonStudentPreview"></div>
+                  </button>
+                {% else %}
+                  <div class="student-picker-no-students">
+                    <i class="bi bi-info-circle me-1"></i>
+                    У вас пока нет подтверждённых учеников.
+                    <a href="{% url 'tutor:students_manage' %}">Пригласите ученика</a>, чтобы создавать занятия.
+                  </div>
+                {% endif %}
+                {% for error in form.student.errors %}
+                  <div class="invalid-feedback d-block">{{ error }}</div>
+                {% endfor %}
+              </div>
+              {% include 'tutor/includes/form_field.html' with field=form.subject icon='book' col_class='col-12 col-md-6' %}
+            </div>
+          </section>
+
+          {# ── Стоимость ── #}
+          <section class="lesson-form-section">
+            <div class="lesson-form-section__head">
+              <div class="lesson-form-section__icon"><i class="bi bi-currency-exchange"></i></div>
+              <h2 class="lesson-form-section__title">Стоимость</h2>
+            </div>
+            <div class="row g-3">
+              {% include 'tutor/includes/form_field.html' with field=form.hourly_rate icon='cash' col_class='col-12 col-md-6' %}
+              <div class="col-12 col-md-6 d-flex align-items-end">
+                <div class="lesson-repeat-hint w-100 mb-1">
+                  <i class="bi bi-info-circle"></i>
+                  <span>Итоговая сумма рассчитывается автоматически по длительности занятия.</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {# ── 2. Расписание ── #}
+          <section class="lesson-form-section">
+            <div class="lesson-form-section__head">
+              <div class="lesson-form-section__icon"><i class="bi bi-calendar-event"></i></div>
+              <h2 class="lesson-form-section__title">Расписание</h2>
+            </div>
+            <div class="row g-3">
+              {% include 'tutor/includes/form_field.html' with field=form.date icon='calendar3' col_class='col-12 col-md-4' %}
+              {% include 'tutor/includes/form_field.html' with field=form.start_time icon='clock' col_class='col-12 col-md-4' %}
+              {% include 'tutor/includes/form_field.html' with field=form.end_time icon='clock-history' col_class='col-12 col-md-4' %}
+            </div>
+
+            <div class="lesson-duration-summary" id="lessonDurationSummary" hidden>
+              <div class="lesson-duration-summary__item">
+                <i class="bi bi-hourglass-split" style="color:var(--brand)"></i>
+                <span class="lesson-duration-summary__label">Длительность</span>
+                <strong class="lesson-duration-summary__value" id="lessonDurationText">—</strong>
+              </div>
+              <div class="lesson-duration-summary__item" id="lessonCostWrap" hidden>
+                <i class="bi bi-cash-stack" style="color:#54D6B4"></i>
+                <span class="lesson-duration-summary__label">Стоимость</span>
+                <strong class="lesson-duration-summary__value lesson-duration-summary__value--accent" id="lessonCostText">—</strong>
+              </div>
+              <p class="lesson-duration-summary__warning" id="lessonDurationWarning" hidden>
+                Время окончания должно быть позже времени начала.
+              </p>
+            </div>
+
+            {% if not form.instance.pk %}
+              <div class="row g-3 mt-1">
+                {% include 'tutor/includes/form_field.html' with field=form.repeat_period icon='arrow-repeat' col_class='col-12' %}
+              </div>
+              <div class="lesson-repeat-hint">
+                <i class="bi bi-info-circle"></i>
+                <span>При выборе повтора система создаст такие же занятия каждую неделю до конца выбранного периода.</span>
+              </div>
+            {% endif %}
+          </section>
+
+          {# ── 3. Детали ── #}
+          <section class="lesson-form-section">
+            <div class="lesson-form-section__head">
+              <div class="lesson-form-section__icon"><i class="bi bi-sliders"></i></div>
+              <h2 class="lesson-form-section__title">Детали занятия</h2>
+            </div>
+            <div class="row g-3">
+              {% include 'tutor/includes/form_field.html' with field=form.lesson_format icon='camera-video' col_class='col-12 col-md-6' %}
+              {% include 'tutor/includes/form_field.html' with field=form.status icon='flag' col_class='col-12 col-md-6' %}
+              {% include 'tutor/includes/form_field.html' with field=form.comment icon='chat-left-text' col_class='col-12' %}
+            </div>
+          </section>
+
+          {# ── 4. Оплата (только после окончания занятия) ── #}
+          {% if 'is_paid' in form.fields %}
+          <section class="lesson-form-section">
+            <div class="lesson-form-section__head">
+              <div class="lesson-form-section__icon"><i class="bi bi-wallet2"></i></div>
+              <h2 class="lesson-form-section__title">Оплата</h2>
+            </div>
+            <div class="lesson-paid-card">
+              <div class="lesson-paid-card__text">
+                <strong>Занятие оплачено</strong>
+                <span>Можно изменить позже в расписании одним кликом.</span>
+              </div>
+              <div class="form-check form-switch m-0">
+                {{ form.is_paid }}
+              </div>
+            </div>
+            {% for error in form.is_paid.errors %}
+              <div class="invalid-feedback d-block mt-2">{{ error }}</div>
+            {% endfor %}
+          </section>
+          {% endif %}
+
+          <div class="lesson-form-actions">
+            <a href="{% url 'tutor:schedule' %}" class="btn btn-ghost">Отмена</a>
+            <div class="lesson-form-actions__primary">
+              <button type="submit" class="btn btn-primary px-4" {% if not teacher_students and not form.instance.pk %}disabled{% endif %}>
+                <i class="bi bi-check2-circle me-1"></i>
+                {% if form.instance.pk %}Сохранить изменения{% else %}Создать занятие{% endif %}
+              </button>
+            </div>
+          </div>
+        </form>
+
+        {% include 'tutor/includes/lesson_homework_section.html' %}
+
+        {% if form.instance.pk %}
+        <div class="lesson-form-danger mt-4">
+          <h3 class="h6 text-danger mb-2"><i class="bi bi-exclamation-triangle me-1"></i>Удаление</h3>
+          <p class="text-muted small mb-3">Удаление необратимо. Связанные домашние задания тоже будут удалены.</p>
+          <div class="d-flex flex-wrap gap-2 align-items-center">
+            <form method="post" action="{% url 'tutor:lesson_delete' form.instance.pk %}">
+              {% csrf_token %}
+              <input type="hidden" name="scope" value="single">
+              <button type="button" class="btn btn-outline-danger btn-sm"
+                data-pydep-confirm
+                data-confirm-title="Удалить занятие?"
+                data-confirm-message="Удалить это занятие? Это действие нельзя отменить. Связанные домашние задания тоже будут удалены."
+                data-confirm-ok="Удалить"
+                data-confirm-variant="danger">
+                <i class="bi bi-trash me-1"></i>Удалить занятие
+              </button>
+            </form>
+            {% if lesson_series_count > 1 %}
+            <form method="post" action="{% url 'tutor:lesson_delete' form.instance.pk %}">
+              {% csrf_token %}
+              <input type="hidden" name="scope" value="series">
+              <button type="button" class="btn btn-danger btn-sm"
+                data-pydep-confirm
+                data-confirm-title="Удалить серию занятий?"
+                data-confirm-message="Удалить все {{ lesson_series_count }} занятий этой серии повторов? Это действие нельзя отменить."
+                data-confirm-ok="Удалить все"
+                data-confirm-variant="danger">
+                <i class="bi bi-trash3 me-1"></i>Удалить всю серию ({{ lesson_series_count }})
+              </button>
+            </form>
+            {% endif %}
+          </div>
+        </div>
+        {% endif %}
+      </div>
+
+      {# ── Live preview ticket ── #}
+      <aside class="lesson-editor__aside">
+        <div class="lesson-editor__aside-label">Превью занятия</div>
+        <div class="lesson-ticket" id="lessonTicket">
+          <div class="lesson-ticket__head">
+            <span class="lt-chip" id="ltFormat"><i class="bi bi-camera-video"></i> <span>Онлайн</span></span>
+            <span class="lt-status" id="ltStatus" data-s="scheduled">Запланировано</span>
+          </div>
+          <div class="lesson-ticket__body">
+            <div class="lt-subject is-empty" id="ltSubject">Новое занятие</div>
+            <div class="lt-student">
+              <img class="lt-avatar" id="ltAvatar" src="{% static 'img/anonymous_user.png' %}" alt="">
+              <div>
+                <div class="lt-student__name" id="ltStudentName">Ученик не выбран</div>
+                <div class="lt-student__sub">ученик</div>
+              </div>
+            </div>
+            <div class="lt-when">
+              <div class="lt-date">
+                <div class="lt-date__d" id="ltDay">—</div>
+                <div class="lt-date__m" id="ltMonth">···</div>
+              </div>
+              <div>
+                <div class="lt-time" id="ltTime">Время не указано</div>
+                <div class="lt-time__dur" id="ltDuration"></div>
+              </div>
+            </div>
+          </div>
+          <div class="lt-perf"></div>
+          <div class="lesson-ticket__foot">
+            <div>
+              <div class="lt-cost__label">Стоимость</div>
+              <div class="lt-cost__val" id="ltCost">—</div>
+            </div>
+            <span class="lt-brand">{% include 'includes/platform_icon.html' with platform='tutor' size=16 %} Репетитор</span>
+          </div>
+        </div>
+        <p class="lesson-editor__hint">
+          <i class="bi bi-stars"></i>
+          <span>Так занятие появится в расписании ученика. Заполните поля — и карточка соберётся сама.</span>
+        </p>
+      </aside>
+    </div>
+  </div>
+</section>
+
+{% if teacher_students %}
+{% include 'tutor/includes/student_picker_modal.html' with modal_id='lessonStudentModal' modal_title='Выберите ученика' search_id='lessonStudentSearch' grid_id='lessonStudentGrid' %}
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/lesson-duration.js' %}"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    window.lessonDurationCtrl = PyDepLessonDuration.init({
+      startId: 'id_start_time',
+      endId: 'id_end_time',
+      rateId: 'id_hourly_rate',
+      summaryId: 'lessonDurationSummary',
+      durationTextId: 'lessonDurationText',
+      costWrapId: 'lessonCostWrap',
+      costTextId: 'lessonCostText',
+      warningId: 'lessonDurationWarning',
+    });
+
+    /* ── Live ticket preview ── */
+    var MONTHS = ['ЯНВ','ФЕВ','МАР','АПР','МАЙ','ИЮН','ИЮЛ','АВГ','СЕН','ОКТ','НОЯ','ДЕК'];
+    var $ = function (id) { return document.getElementById(id); };
+    var subject = $('id_subject'),
+        date = $('id_date') || document.querySelector('input[name="date"]'),
+        start = $('id_start_time') || document.querySelector('input[name="start_time"]'),
+        end = $('id_end_time') || document.querySelector('input[name="end_time"]'),
+        fmt = $('id_lesson_format'), status = $('id_status');
+
+    function selText(sel) {
+      if (!sel || sel.selectedIndex < 0) return '';
+      return sel.options[sel.selectedIndex].text;
+    }
+    function hm(v) { return v ? String(v).slice(0, 5) : ''; }
+
+    function syncTicket() {
+      // subject
+      var s = (subject && subject.value || '').trim();
+      var subjEl = $('ltSubject');
+      subjEl.textContent = s || 'Новое занятие';
+      subjEl.classList.toggle('is-empty', !s);
+
+      // date (fallback to the picker's initial hidden value)
+      var initEl = $('initial-id_date') || document.querySelector('input[name="initial-date"]');
+      var dval = (date && date.value) || (initEl && initEl.value) || '';
+      var p = dval.split('-');
+      if (p.length === 3) {
+        $('ltDay').textContent = String(parseInt(p[2], 10));
+        $('ltMonth').textContent = MONTHS[parseInt(p[1], 10) - 1] || '···';
+      } else { $('ltDay').textContent = '—'; $('ltMonth').textContent = '···'; }
+
+      // time
+      var st = hm(start && start.value), en = hm(end && end.value);
+      $('ltTime').textContent = (st && en) ? (st + ' – ' + en) : (st || 'Время не указано');
+
+      // duration + cost mirror the controller output
+      var dur = $('lessonDurationText'), cost = $('lessonCostText'), costWrap = $('lessonCostWrap');
+      var durEl = $('ltDuration');
+      durEl.textContent = (dur && dur.textContent && dur.textContent !== '—') ? dur.textContent : '';
+      var costEl = $('ltCost');
+      if (costWrap && !costWrap.hidden && cost && cost.textContent !== '—') {
+        costEl.textContent = cost.textContent;
+      } else {
+        costEl.innerHTML = '<small>по ставке</small>';
+      }
+
+      // format chip
+      var fEl = $('ltFormat');
+      var fv = fmt ? fmt.value : '';
+      var online = fv !== 'offline';
+      fEl.querySelector('i').className = online ? 'bi bi-camera-video' : 'bi bi-geo-alt';
+      fEl.querySelector('span').textContent = selText(fmt) || (online ? 'Онлайн' : 'Офлайн');
+
+      // status pill
+      var stEl = $('ltStatus');
+      stEl.textContent = selText(status) || 'Запланировано';
+      stEl.setAttribute('data-s', status ? status.value : 'scheduled');
+    }
+
+    window.lessonTicketSync = syncTicket;
+    var form = $('lessonForm');
+    if (form) {
+      form.addEventListener('input', function () { setTimeout(syncTicket, 0); });
+      form.addEventListener('change', function () { setTimeout(syncTicket, 0); });
+    }
+    syncTicket();
+  });
+</script>
+{% if teacher_students %}
+<script src="{% static 'js/student-picker.js' %}"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const rates = {{ student_rates_json|safe }};
+    const rateInput = document.getElementById('id_hourly_rate');
+    const defaultAvatar = "{% static 'img/anonymous_user.png' %}";
+    PyDepStudentPicker.init({
+      modalId: 'lessonStudentModal',
+      gridId: 'lessonStudentGrid',
+      searchId: 'lessonStudentSearch',
+      inputId: '{{ form.student.id_for_label }}',
+      previewId: 'lessonStudentPreview',
+      triggerId: 'lessonStudentTrigger',
+      cards: {{ students_cards_json|safe }},
+      defaultAvatar: defaultAvatar,
+      placeholder: 'Нажмите, чтобы выбрать ученика',
+      onSelect: function (user) {
+        if (rateInput && rates[String(user.id)]) {
+          rateInput.value = rates[String(user.id)];
+        }
+        // обновляем превью-билет
+        var nameEl = document.getElementById('ltStudentName');
+        var avaEl = document.getElementById('ltAvatar');
+        if (nameEl) nameEl.textContent = user.full_name || user.username || 'Ученик';
+        if (avaEl) avaEl.src = user.avatar_url || defaultAvatar;
+        window.lessonDurationCtrl?.update();
+        window.lessonTicketSync?.();
+      },
+    });
+    // если ученик уже выбран (редактирование) — подтянуть в билет
+    var pre = document.querySelector('#lessonStudentPreview .student-picker-preview__text');
+    if (pre) {
+      var nm = pre.querySelector('strong');
+      if (nm) document.getElementById('ltStudentName').textContent = nm.textContent;
+      var img = document.querySelector('#lessonStudentPreview .student-picker-preview__avatar');
+      if (img) document.getElementById('ltAvatar').src = img.src;
+    }
+  });
+</script>
+{% endif %}
+{% endblock %}

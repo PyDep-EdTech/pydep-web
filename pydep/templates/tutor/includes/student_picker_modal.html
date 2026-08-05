@@ -1,0 +1,19 @@
+<div class="modal fade" id="{{ modal_id|default:'studentPickerModal' }}" tabindex="-1" aria-labelledby="{{ modal_id|default:'studentPickerModal' }}Label" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="{{ modal_id|default:'studentPickerModal' }}Label">
+          <i class="bi bi-people me-2"></i>{{ modal_title|default:"Выбор ученика" }}
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+      </div>
+      <div class="modal-body">
+        <div class="student-picker-search-wrap mb-3">
+          <i class="bi bi-search"></i>
+          <input type="search" class="form-control" id="{{ search_id|default:'studentPickerSearch' }}" placeholder="Поиск по имени или логину…" autocomplete="off">
+        </div>
+        <div class="student-picker-grid" id="{{ grid_id|default:'studentPickerGrid' }}"></div>
+      </div>
+    </div>
+  </div>
+</div>

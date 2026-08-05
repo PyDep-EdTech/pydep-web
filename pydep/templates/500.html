@@ -1,0 +1,7 @@
+{% extends 'base.html' %}
+
+{% block title %}Ошибка сервера — PyDep{% endblock %}
+
+{% block content %}
+{% include 'includes/error_page.html' with code='500' icon='exclamation-triangle' title='Что-то пошло не так' message='На сервере произошла ошибка. Мы уже работаем над этим — попробуйте обновить страницу чуть позже.' show_courses=False %}
+{% endblock %}

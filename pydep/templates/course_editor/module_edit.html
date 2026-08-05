@@ -1,0 +1,160 @@
+{% extends 'course_editor/base_studio.html' %}
+{% load static %}
+
+{% block title %}{% if module %}{{ module.title }}{% else %}Новый модуль{% endif %} — Студия{% endblock %}
+
+{% block studio_content %}
+<nav class="studio-breadcrumbs">
+    <a href="{% url 'studio:main' %}">Студия</a>
+    <span class="sep">/</span>
+    <a href="{% url 'studio:course_edit' course.id %}">{{ course.name }}</a>
+    <span class="sep">/</span>
+    <span>{% if module %}{{ module.title }}{% else %}Новый модуль{% endif %}</span>
+</nav>
+
+<div class="studio-page-head">
+    <div>
+        <h1>{% if module %}Редактирование модуля{% else %}Новый модуль{% endif %}</h1>
+        <p>Курс «{{ course.name }}»</p>
+    </div>
+    <div class="studio-actions">
+        <a href="{% url 'studio:course_edit' course.id %}" class="btn btn-ghost btn-sm">
+            <i class="bi bi-arrow-left"></i> К курсу
+        </a>
+    </div>
+</div>
+
+<form method="post" enctype="multipart/form-data" id="module-form">
+    {% csrf_token %}
+    {% include 'course_editor/includes/studio_form_errors.html' %}
+
+    <div class="studio-panel">
+        <div class="studio-panel__title">
+            <h2><i class="bi bi-info-circle me-2"></i>Основная информация</h2>
+        </div>
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label">Название модуля</label>
+                {{ form.title }}
+                {% if form.title.errors %}<div class="text-danger small">{{ form.title.errors|join:", " }}</div>{% endif %}
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Обложка</label>
+                {{ form.image }}
+            </div>
+            <div class="col-12">
+                <label class="form-label">Описание</label>
+                {{ form.description }}
+            </div>
+        </div>
+    </div>
+
+    {% if module %}
+    <div class="studio-panel">
+        <div class="studio-panel__title">
+            <h2><i class="bi bi-journal-text me-2"></i>Уроки модуля</h2>
+            <div class="d-flex gap-2 flex-wrap">
+                {% if available_lessons %}
+                <button type="button" class="btn btn-ghost btn-sm" id="attachLessonTrigger">
+                    <i class="bi bi-journal-plus"></i> Добавить существующий
+                </button>
+                {% endif %}
+                <a href="{% url 'studio:lesson_create' course.id module.id %}" class="btn btn-primary btn-sm">
+                    <i class="bi bi-plus-lg"></i> Новый урок
+                </a>
+            </div>
+        </div>
+
+        <input type="hidden" name="lessons_order" id="lessons_order" value="">
+
+        {% if attached_lessons %}
+        <div class="studio-sortable" id="studio-lessons-sortable"
+             data-reorder-url="{% url 'studio:reorder' %}"
+             data-course-id="{{ course.id }}"
+             data-module-id="{{ module.id }}">
+            {% for lesson in attached_lessons %}
+            <div class="studio-sortable__item" data-id="{{ lesson.id }}">
+                <span class="studio-sortable__handle"><i class="bi bi-grip-vertical"></i></span>
+                <div class="studio-sortable__body">
+                    <div class="studio-sortable__title">{{ lesson.title }}</div>
+                    <div class="studio-sortable__meta">
+                        {% if lesson.has_blocks %}<i class="bi bi-check2 text-success"></i> Контент{% else %}Пустой{% endif %}
+                    </div>
+                </div>
+                <div class="studio-sortable__actions">
+                    <a href="{% url 'studio:lesson_edit' course.id module.id lesson.id %}" class="btn btn-ghost btn-sm">
+                        <i class="bi bi-pencil"></i>
+                    </a>
+                    <button type="button"
+                            class="btn btn-ghost btn-sm text-danger studio-detach-btn"
+                            data-detach-form="studio-detach-lesson-form"
+                            data-detach-id="{{ lesson.id }}"
+                            data-confirm="Открепить урок от модуля?">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <p class="studio-save-hint"><i class="bi bi-arrows-move me-1"></i>Перетащите уроки для изменения порядка</p>
+        {% else %}
+        <div class="studio-sortable__empty">
+            Уроков пока нет.
+            <a href="{% url 'studio:lesson_create' course.id module.id %}" class="btn btn-primary btn-sm mt-2">Создать урок</a>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <a href="{% url 'studio:course_edit' course.id %}" class="btn btn-ghost">Отмена</a>
+        <button type="submit" class="btn btn-primary btn-lg">
+            <i class="bi bi-check-lg me-1"></i> {% if module %}Сохранить модуль{% else %}Создать модуль{% endif %}
+        </button>
+    </div>
+</form>
+
+{% if module %}
+<form method="post" id="studio-detach-lesson-form" class="d-none">
+    {% csrf_token %}
+    <input type="hidden" name="detach_lesson" value="1">
+    <input type="hidden" name="lesson_id" id="studio-detach-lesson-id" value="">
+</form>
+{% endif %}
+
+{% if module and available_lessons %}
+{{ available_lessons_data|json_script:"studio-lessons-data" }}
+{% include 'course_editor/includes/studio_attach_modal.html' with modal_id='attachLessonModal' modal_title='Добавить урок в модуль' modal_icon='bi-journal-text' search_id='attachLessonSearch' grid_id='attachLessonGrid' form_id='attach-lesson-form' id_input_id='attachLessonId' attach_field='attach_lesson' id_field='lesson_id' search_placeholder='Поиск по названию урока…' %}
+{% endif %}
+
+{% if module and attached_lessons %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var input = document.getElementById('lessons_order');
+    if (input) {
+        input.value = [{% for lesson in attached_lessons %}{{ lesson.id }}{% if not forloop.last %}, {% endif %}{% endfor %}].join(',');
+    }
+});
+</script>
+{% endif %}
+
+{% if module and available_lessons %}
+<script src="{% static 'js/studio-attach-picker.js' %}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var dataEl = document.getElementById('studio-lessons-data');
+    if (!dataEl || !window.PyDepStudioAttachPicker) return;
+    PyDepStudioAttachPicker.init({
+        modalId: 'attachLessonModal',
+        gridId: 'attachLessonGrid',
+        searchId: 'attachLessonSearch',
+        formId: 'attach-lesson-form',
+        idInputId: 'attachLessonId',
+        triggerId: 'attachLessonTrigger',
+        items: JSON.parse(dataEl.textContent),
+        iconClass: 'bi-journal-text',
+    });
+});
+</script>
+{% endif %}
+{% endblock %}

@@ -1,111 +1,283 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Онлайн обучение — будущее за тобой{% endblock %}
+{% block title %}PyDep — код, который меняет карьеру{% endblock %}
 
 {% block static %}
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 <style>
-    .hero {
-        min-height: 90vh;
-        {#background: linear-gradient(120deg, #f0f4ff, #e6eaff);#}
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 60px 20px;
-        text-align: center;
+    /* ───────────── Hero ───────────── */
+    .hero { position: relative; padding: 64px 0 40px; overflow: hidden; }
+    .hero-grid {
+        display: grid; grid-template-columns: 1.05fr .95fr; gap: 56px; align-items: center;
     }
+    @media (max-width: 900px) { .hero-grid { grid-template-columns: 1fr; gap: 38px; } }
+
     .hero h1 {
-        font-size: 3rem;
-        font-weight: 800;
-        line-height: 1.2;
-        background: linear-gradient(90deg, #007bff, #6610f2);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        margin-bottom: 20px;
-        animation: fadeInDown 1s ease both;
+        font-size: clamp(2.8rem, 6.4vw, 5.4rem);
+        line-height: .98; letter-spacing: -.035em; font-weight: 800;
+        margin: 0 0 1.4rem;
     }
-    .hero p {
-        font-size: 1.25rem;
-        color: #555;
-        max-width: 700px;
-        margin: 0 auto 30px;
-        animation: fadeInUp 1.2s ease both;
+    .hero h1 .ink-line { display: block; }
+    .hero h1 .hero-punct { margin-left: .14em; letter-spacing: 0; }
+    .hero h1 em {
+        font-style: normal; color: var(--brand);
+        position: relative; white-space: nowrap;
     }
-    .hero-buttons a {
-        padding: 12px 30px;
-        font-weight: 600;
-        border-radius: 12px;
-        font-size: 1rem;
-        margin: 0 10px;
-        transition: 0.3s ease;
+    .hero h1 em::after {
+        content: ""; position: absolute; left: 0; right: 0; bottom: .08em; height: .12em;
+        background: var(--brand); opacity: .35; border-radius: 2px;
     }
-    .hero-buttons .btn-primary {
-        background: #007bff;
-        color: white;
+    .hero-lead { font-size: 1.18rem; line-height: 1.55; color: var(--text-muted); max-width: 30rem; margin-bottom: 2.1rem; }
+
+    .hero-cta { display: flex; flex-wrap: wrap; gap: .85rem; align-items: center; }
+    .hero-meta { display: flex; gap: 28px; margin-top: 2.6rem; flex-wrap: wrap; }
+    .hero-meta .m-num { font-family: 'Bricolage Grotesque', sans-serif; font-size: 1.7rem; font-weight: 800; color: var(--heading); line-height: 1; }
+    .hero-meta .m-lbl { font-size: .82rem; color: var(--text-muted); margin-top: .35rem; }
+    .hero-meta .m-sep { width: 1px; background: var(--border); align-self: stretch; }
+
+    /* Code terminal — crafted, on-theme */
+    .terminal {
+        background: #111113; border: 1px solid var(--border-strong);
+        border-radius: 16px; overflow: hidden; box-shadow: var(--shadow);
+        transform: rotate(.4deg);
     }
-    .hero-buttons .btn-outline-dark {
-        border: 2px solid #333;
-        color: #333;
+    [data-theme="light"] .terminal { background: #15140F; }
+    .terminal__bar { display: flex; align-items: center; gap: 7px; padding: 13px 16px; border-bottom: 1px solid rgba(255,255,255,.08); }
+    .terminal__bar i { width: 11px; height: 11px; border-radius: 50%; background: #2e2e33; }
+    .terminal__bar i:nth-child(1) { background: #ff5f57; }
+    .terminal__bar i:nth-child(2) { background: #febc2e; }
+    .terminal__bar i:nth-child(3) { background: #28c840; }
+    .terminal__name { margin-left: 10px; font: 600 .78rem ui-monospace, 'SF Mono', Menlo, monospace; color: #6E685B; }
+    .terminal__body { padding: 20px 22px; font: 400 .92rem/1.75 ui-monospace, 'SF Mono', Menlo, monospace; color: #d6d0c2; }
+    .terminal__body .ln { display: block; white-space: pre; }
+    .tk-kw { color: #FFB020; }
+    .tk-fn { color: #54D6B4; }
+    .tk-str { color: #b6e08a; }
+    .tk-com { color: #6E685B; }
+    .term-cursor { display: inline-block; width: 8px; height: 1.05em; background: var(--brand); vertical-align: -2px; animation: blink 1.1s steps(1) infinite; }
+    .term-return-tail { white-space: pre; }
+    @keyframes blink { 50% { opacity: 0; } }
+
+    /* ───────────── Marquee ───────────── */
+    .marquee-section {
+        overflow: clip;
+        contain: paint;
+        margin-top: 30px;
     }
-    .hero-buttons .btn-primary:hover {
-        background: #0056b3;
+    .marquee {
+        padding: 22px 0;
+        border-top: 1px solid var(--border);
+        border-bottom: 1px solid var(--border);
+        overflow: clip;
+        contain: paint;
+        -webkit-mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+        mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
     }
-    .hero-buttons .btn-outline-dark:hover {
-        background: #333;
-        color: #fff;
+    .marquee-track {
+        display: flex;
+        gap: 2.6rem;
+        width: max-content;
+        animation: scrollx 32s linear infinite;
+        align-items: center;
+        will-change: transform;
+        font: 600 1rem 'Bricolage Grotesque', sans-serif;
+        color: var(--text-dim);
+        text-transform: uppercase;
+        letter-spacing: .04em;
     }
-    .features {
-        background: #fff;
-        padding: 60px 20px;
+    .marquee-track .sep { color: var(--brand); }
+    @keyframes scrollx { to { transform: translate3d(-50%, 0, 0); } }
+
+    /* ───────────── Sections ───────────── */
+    .section { padding: 84px 0; }
+    .section-head { max-width: 44rem; margin-bottom: 3rem; }
+    .section-title { font-size: clamp(2rem, 4vw, 3rem); letter-spacing: -.03em; margin-bottom: 1rem; line-height: 1.05; }
+    .section-sub { color: var(--text-muted); font-size: 1.1rem; }
+
+    .feature-card {
+        height: 100%; padding: 2rem 1.8rem 2.1rem;
+        background: var(--surface); border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        transition: transform .4s cubic-bezier(.2,.7,.2,1), border-color .3s, background .3s;
     }
-    .feature-icon {
-        font-size: 3rem;
-        color: #007bff;
-        margin-bottom: 15px;
+    .feature-card:hover { transform: translateY(-6px); border-color: var(--border-strong); background: var(--surface-2); }
+    .feature-num { font: 800 .9rem 'Bricolage Grotesque', sans-serif; color: var(--brand); margin-bottom: 1.4rem; letter-spacing: .05em; }
+    .feature-ic { width: 50px; height: 50px; border-radius: 14px; display: grid; place-items: center; font-size: 1.45rem; color: var(--on-brand); background: var(--brand); margin-bottom: 1.3rem; }
+    .feature-card h5 { font-size: 1.22rem; margin-bottom: .55rem; letter-spacing: -.01em; }
+    .feature-card p { color: var(--text-muted); margin: 0; line-height: 1.6; }
+
+    /* CTA band */
+    .cta {
+        position: relative; overflow: hidden; border-radius: var(--radius-lg);
+        padding: clamp(2.5rem, 5vw, 4.5rem); border: 1px solid var(--border-strong);
+        background: var(--surface);
     }
-    @keyframes fadeInDown {
-        from { opacity: 0; transform: translateY(-30px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes fadeInUp {
-        from { opacity: 0; transform: translateY(30px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
+    .cta::before { content: ""; position: absolute; right: -10%; top: -40%; width: 38rem; height: 38rem;
+        background: radial-gradient(circle, rgba(255,176,32,.16), transparent 60%); pointer-events: none; }
+    .cta-inner { position: relative; z-index: 1; max-width: 40rem; }
+    .cta h2 { font-size: clamp(2rem, 4.5vw, 3.2rem); letter-spacing: -.03em; line-height: 1.02; margin-bottom: 1rem; }
+    .cta p { color: var(--text-muted); font-size: 1.12rem; margin-bottom: 2rem; }
 </style>
 {% endblock %}
 
 {% block content %}
 <section class="hero">
-    <div>
-        <h1>Учись современно. Развивайся уверенно.</h1>
-        <p>Освой востребованные профессии онлайн: Python, Django, SQL, веб-разработка и не только — с поддержкой наставников и практикой на реальных проектах.</p>
-        <div class="hero-buttons">
-            <a href="{% url 'lesson:courses' %}" class="btn btn-primary">Начать обучение</a>
-            <a href="{% url 'lesson:profile' %}" class="btn btn-outline-dark">Мой профиль</a>
+    <div class="container hero-grid">
+        <div class="hero-copy">
+            <h1>
+                <span class="ink-line">Код<span class="hero-punct">,</span> который</span>
+                <span class="ink-line">меняет <em>карьеру</em>.</span>
+            </h1>
+            <p class="hero-lead">
+                Python, Django, SQL и веб-разработка — структурная программа,
+                живые наставники и практика на реальных проектах. Без воды.
+            </p>
+            <div class="hero-cta">
+                <a href="{% url 'lesson:courses' %}" class="btn btn-primary btn-lg">Выбрать курс <i class="bi bi-arrow-right ms-1"></i></a>
+                <a href="{% url 'lesson:python_playground' %}" class="btn btn-ghost btn-lg">Python-песочница</a>
+                <a href="{% url 'tutor:my_tutor' %}" class="btn btn-ghost btn-lg">Нужен репетитор</a>
+            </div>
+            <div class="hero-meta">
+                <div><div class="m-num">15+</div><div class="m-lbl">направлений</div></div>
+                <div class="m-sep"></div>
+                <div><div class="m-num">100%</div><div class="m-lbl">практики</div></div>
+                <div class="m-sep"></div>
+                <div><div class="m-num">24/7</div><div class="m-lbl">поддержка</div></div>
+            </div>
+        </div>
+
+        <div class="hero-art">
+            <div class="terminal">
+                <div class="terminal__bar"><i></i><i></i><i></i><span class="terminal__name">career.py</span></div>
+                <div class="terminal__body">
+<span class="ln"><span class="tk-com"># твой следующий шаг</span></span>
+<span class="ln"><span class="tk-kw">def</span> <span class="tk-fn">start</span>(goal):</span>
+<span class="ln">    skills = [<span class="tk-str">"python"</span>, <span class="tk-str">"sql"</span>, <span class="tk-str">"django"</span>]</span>
+<span class="ln">    <span class="tk-kw">while not</span> goal.reached:</span>
+<span class="ln">        learn(skills)  <span class="tk-com"># каждый день</span></span>
+<span class="ln">        build(<span class="tk-str">"real projects"</span>)</span>
+<span class="ln">    <span class="tk-kw">return</span> <span class="tk-str">"<span class="term-return-tail"><span class="term-return-word" id="heroReturnWord">оффер</span><span class="term-cursor" aria-hidden="true"></span>"</span></span></span>
+                </div>
+            </div>
         </div>
     </div>
 </section>
 
-<section class="features text-center">
+<section class="marquee-section" aria-hidden="true">
     <div class="container">
-        <div class="row">
-            <div class="col-md-4">
-                <div class="feature-icon"><i class="bi bi-code-slash"></i></div>
-                <h5 class="fw-bold">Актуальные курсы</h5>
-                <p>Только то, что действительно нужно работодателю — от Python до SQL и Django.</p>
-            </div>
-            <div class="col-md-4">
-                <div class="feature-icon"><i class="bi bi-person-video3"></i></div>
-                <h5 class="fw-bold">Поддержка наставников</h5>
-                <p>Каждое задание проверяется экспертом, а на вопросы ты получаешь быстрые ответы.</p>
-            </div>
-            <div class="col-md-4">
-                <div class="feature-icon"><i class="bi bi-award"></i></div>
-                <h5 class="fw-bold">Сертификаты и кейсы</h5>
-                <p>Портфолио с настоящими проектами и документами, которые ценят компании.</p>
+        <div class="marquee">
+            <div class="marquee-track">
+                <span>Python</span><span class="sep">✦</span><span>Django</span><span class="sep">✦</span><span>SQL</span><span class="sep">✦</span>
+                <span>REST API</span><span class="sep">✦</span><span>Docker</span><span class="sep">✦</span><span>Git</span><span class="sep">✦</span>
+                <span>PostgreSQL</span><span class="sep">✦</span><span>Linux</span><span class="sep">✦</span>
+                <span>Python</span><span class="sep">✦</span><span>Django</span><span class="sep">✦</span><span>SQL</span><span class="sep">✦</span>
+                <span>REST API</span><span class="sep">✦</span><span>Docker</span><span class="sep">✦</span><span>Git</span><span class="sep">✦</span>
+                <span>PostgreSQL</span><span class="sep">✦</span><span>Linux</span><span class="sep">✦</span>
             </div>
         </div>
     </div>
 </section>
+
+<section class="section">
+    <div class="container">
+        <div class="section-head reveal">
+            <h2 class="section-title">Не курсы ради сертификата.<br>Навыки ради работы.</h2>
+            <p class="section-sub">Каждый модуль доводит до практического результата, который не стыдно показать на собеседовании.</p>
+        </div>
+        <div class="row g-4">
+            <div class="col-md-4 reveal">
+                <div class="feature-card">
+                    <div class="feature-num">01</div>
+                    <div class="feature-ic"><i class="bi bi-code-slash"></i></div>
+                    <h5>Программа от практиков</h5>
+                    <p>То, что действительно спрашивают на работе — от основ Python до архитектуры на Django.</p>
+                </div>
+            </div>
+            <div class="col-md-4 reveal" data-delay="100">
+                <div class="feature-card">
+                    <div class="feature-num">02</div>
+                    <div class="feature-ic"><i class="bi bi-person-workspace"></i></div>
+                    <h5>Живые наставники</h5>
+                    <p>Ревью кода, разбор ошибок и быстрые ответы. Не один на один с видеолекцией.</p>
+                </div>
+            </div>
+            <div class="col-md-4 reveal" data-delay="200">
+                <div class="feature-card">
+                    <div class="feature-num">03</div>
+                    <div class="feature-ic"><i class="bi bi-rocket-takeoff"></i></div>
+                    <h5>Проекты в портфолио</h5>
+                    <p>На выходе — реальные кейсы и код на GitHub, а не абстрактные задачки «в стол».</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section pt-0">
+    <div class="container">
+        <div class="cta reveal">
+            <div class="cta-inner">
+                <h2>Первый урок ближе,<br>чем кажется.</h2>
+                <p>Выбери направление и начни сегодня. Прогресс начинается с одного шага.</p>
+                <a href="{% url 'lesson:courses' %}" class="btn btn-primary btn-lg">Смотреть курсы <i class="bi bi-arrow-right ms-1"></i></a>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    var el = document.getElementById('heroReturnWord');
+    if (!el) return;
+
+    var words = ['оффер', 'карьера', 'будущее'];
+    var wordIdx = 0;
+    var charIdx = el.textContent.length;
+    var deleting = true;
+
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        return;
+    }
+
+    function schedule(fn, ms) {
+        window.setTimeout(fn, ms);
+    }
+
+    function typeDelay() {
+        return 125 + Math.random() * 55;
+    }
+
+    function tick() {
+        var word = words[wordIdx];
+
+        if (deleting) {
+            if (charIdx > 0) {
+                charIdx -= 1;
+                el.textContent = word.slice(0, charIdx);
+                schedule(tick, 72);
+                return;
+            }
+            deleting = false;
+            wordIdx = (wordIdx + 1) % words.length;
+            schedule(tick, 380);
+            return;
+        }
+
+        word = words[wordIdx];
+        if (charIdx < word.length) {
+            charIdx += 1;
+            el.textContent = word.slice(0, charIdx);
+            schedule(tick, typeDelay());
+            return;
+        }
+
+        deleting = true;
+        schedule(tick, 2800);
+    }
+
+    schedule(tick, 120);
+})();
+</script>
 {% endblock %}

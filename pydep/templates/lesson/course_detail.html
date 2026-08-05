@@ -1,421 +1,228 @@
 {% extends 'base.html' %}
 {% load static %}
 {% load custom_filters %}
-{% block title %}
-    {{ course.name }}
-{% endblock %}
+{% block title %}{{ course.name }} — PyDep{% endblock %}
 
 {% block static %}
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        .module-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-            gap: 20px;
-            padding: 30px 10px;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
+<style>
+    .course-header {
+        position: relative; overflow: hidden;
+        border: 1px solid var(--border); border-radius: var(--radius-lg);
+        padding: 48px 40px; margin: 40px 0;
+        background:
+            radial-gradient(34rem 20rem at 12% -20%, var(--brand-glow-strong), transparent 60%),
+            radial-gradient(30rem 20rem at 100% 120%, var(--brand-glow), transparent 60%),
+            var(--surface-solid);
+    }
+    .course-header h1 { font-size: clamp(2rem, 4.5vw, 3rem); margin-bottom: 1rem; }
+    .course-header .desc { color: var(--text-muted); max-width: 680px; margin: 1.4rem auto 0; }
 
-        .module-card {
-            background-color: #fff;
-            border-radius: 16px;
-            padding: 20px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-            transition: all 0.3s ease;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            animation: fadeInUp 0.5s ease forwards;
-            opacity: 0;
-            transform: translateY(20px);
-            position: relative;
-            overflow: hidden;
-        }
+    .circle-progress-wrapper {
+        display: inline-flex; align-items: center; gap: 16px;
+        padding: 14px 22px; border-radius: 999px;
+        background: var(--surface); border: 1px solid var(--border); backdrop-filter: blur(10px);
+    }
+    .circle-progress { position: relative; width: 64px; height: 64px; flex-shrink: 0; }
+    .circle-progress-ring {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background: conic-gradient(
+            from -90deg,
+            var(--brand) 0deg,
+            #FF9D2E calc(var(--progress, 0) * 3.6deg),
+            rgba(255, 255, 255, .1) calc(var(--progress, 0) * 3.6deg),
+            rgba(255, 255, 255, .1) 360deg
+        );
+        -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 6px), #000 calc(100% - 5px));
+        mask: radial-gradient(farthest-side, transparent calc(100% - 6px), #000 calc(100% - 5px));
+        transition: background .8s cubic-bezier(.4, 0, .2, 1);
+    }
+    .circle-progress-text {
+        position: absolute; inset: 0;
+        display: grid; place-items: center;
+        font-weight: 700; font-size: .92rem; color: var(--heading);
+    }
+    .progress-stats { display: flex; flex-direction: column; gap: 2px; text-align: left; }
+    .progress-stats-label { font-size: .72rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: .06em; }
+    .progress-stats-value { font-size: 1.15rem; font-weight: 700; color: var(--heading); }
 
-        .module-card[data-delay] {
-            animation-delay: calc(var(--delay-index) * 0.1s);
-        }
+    .module-grid {
+        display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: 22px; margin-bottom: 20px;
+    }
+    .module-card {
+        background: var(--surface); border: 1px solid var(--border);
+        border-radius: var(--radius-lg); padding: 22px;
+        display: flex; flex-direction: column;
+        transition: transform .35s cubic-bezier(.22,.61,.36,1), border-color .3s ease, box-shadow .35s ease;
+        position: relative; overflow: hidden; height: 100%;
+    }
+    a:hover > .module-card { transform: translateY(-6px); border-color: var(--border-strong); box-shadow: var(--shadow-glow); }
+    .module-thumb {
+        height: 130px; border-radius: var(--radius); margin-bottom: 18px;
+        display: flex; align-items: center; justify-content: center; padding: 14px;
+        background: radial-gradient(16rem 10rem at 50% 0%, var(--brand-glow), transparent 70%), var(--surface-solid);
+        border: 1px solid var(--border);
+    }
+    .module-thumb img { max-height: 100%; max-width: 100%; object-fit: contain; }
+    .module-card h5 { font-size: 1.1rem; font-weight: 600; margin-bottom: auto; color: var(--heading); }
+    .module-status { margin-top: 18px; }
+    .module-progress-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: .85rem; color: var(--text-muted); }
+    .module-progress-percent { font-weight: 700; color: var(--brand); }
 
-        .module-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
-        }
+    .progress { height: 8px; border-radius: 999px; background: rgba(255,255,255,.08); overflow: hidden; }
+    .progress-bar { background: var(--grad-brand); height: 100%; border-radius: 999px; transition: width .6s cubic-bezier(.4,0,.2,1); position: relative; overflow: hidden; }
+    .progress-bar::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,.35), transparent); animation: shimmer 2s infinite; }
+    @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
 
-        .module-card img {
-            max-height: 120px;
-            object-fit: contain;
-            margin-bottom: 20px;
-            width: 100%;
-        }
+    .badge-pill { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; font-size: .78rem; font-weight: 600; margin-top: 14px; }
+    .module-completed-badge { background: var(--grad-brand); color: #fff; }
+    .module-in-progress-badge { background: rgba(251,191,36,.16); color: #fcd34d; border: 1px solid rgba(251,191,36,.3); }
+    .module-locked-badge { background: rgba(255,255,255,.06); color: var(--text-dim); border: 1px solid var(--border); }
 
-        .module-card h5 {
-            font-size: 1.1rem;
-            font-weight: 600;
-            margin-bottom: auto;
-        }
+    .module-card.locked-module { opacity: .55; cursor: not-allowed; pointer-events: none; }
+    .module-card.locked-module .module-thumb img { filter: grayscale(100%); opacity: .5; }
+    .module-card.locked-module .progress-bar { background: rgba(255,255,255,.15); }
 
-        .module-status {
-            margin-top: 20px;
-            font-size: 0.9rem;
-            color: #6c757d;
-        }
+    .empty-message { max-width: 600px; margin: 50px auto; padding: 44px; text-align: center; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); color: var(--text-muted); font-size: 1.1rem; }
 
-        .module-progress-info {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-            font-size: 0.85rem;
-        }
+    /* Панель записи на курс */
+    .enroll-panel {
+        display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;
+        padding: 22px 26px; margin-bottom: 28px;
+        border: 1px solid var(--border-strong); border-radius: var(--radius-lg); background: var(--surface);
+    }
+    .enroll-panel__info { min-width: 0; }
+    .enroll-price { font-family: 'Bricolage Grotesque', sans-serif; font-size: 1.8rem; font-weight: 800; color: var(--heading); line-height: 1; }
+    .enroll-price small { font-size: .9rem; font-weight: 500; color: var(--text-muted); }
+    .enroll-note { color: var(--text-muted); font-size: .92rem; margin-top: 6px; }
+    .enroll-state { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 999px; font-weight: 700; font-size: .95rem; }
+    .enroll-state.pending { background: rgba(255,176,32,.16); color: #ffce6b; border: 1px solid rgba(255,176,32,.3); }
+    .enroll-state.rejected { background: rgba(248,113,113,.14); color: #fca5a5; border: 1px solid rgba(248,113,113,.3); }
 
-        .module-progress-percent {
-            font-weight: 600;
-            color: #667eea;
-        }
-
-        .module-completed-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 6px 12px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: #ffffff;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            margin-top: 12px;
-        }
-
-        .module-in-progress-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 6px 12px;
-            background: #fff3cd;
-            color: #856404;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            margin-top: 12px;
-        }
-
-        .module-locked-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 6px 12px;
-            background: #e9ecef;
-            color: #6c757d;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            margin-top: 12px;
-        }
-
-        .module-card.locked-module {
-            background-color: #f8f9fa !important;
-            opacity: 0.7;
-            cursor: not-allowed !important;
-            pointer-events: none;
-        }
-
-        .module-card.locked-module:hover {
-            transform: none !important;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05) !important;
-        }
-
-        .module-card.locked-module img {
-            filter: grayscale(100%);
-            opacity: 0.5;
-        }
-
-        .module-card.locked-module h5 {
-            color: #6c757d !important;
-        }
-
-        .module-card.locked-module .progress-bar {
-            background: #dee2e6 !important;
-        }
-
-        .progress {
-            height: 8px;
-            border-radius: 10px;
-            background-color: #e9ecef;
-            margin-top: 12px;
-            overflow: hidden;
-            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
-        }
-
-        .progress-bar {
-            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-            height: 100%;
-            border-radius: 10px;
-            transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .progress-bar::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            bottom: 0;
-            right: 0;
-            background: linear-gradient(
-                90deg,
-                transparent,
-                rgba(255, 255, 255, 0.3),
-                transparent
-            );
-            animation: shimmer 2s infinite;
-        }
-
-        @keyframes shimmer {
-            0% {
-                transform: translateX(-100%);
-            }
-            100% {
-                transform: translateX(100%);
-            }
-        }
-
-        .module-hover-info {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background-color: rgba(0, 0, 0, 0.7);
-            color: #fff;
-            padding: 10px;
-            font-size: 0.9rem;
-            opacity: 0;
-            transform: translateY(100%);
-            transition: 0.3s ease;
-            text-align: center;
-        }
-
-        .module-card:hover .module-hover-info {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        .empty-message {
-            max-width: 600px;
-            margin: 60px auto;
-            padding: 40px;
-            text-align: center;
-            background-color: #f8f9fa;
-            border-radius: 20px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-            font-size: 1.2rem;
-            color: #6c757d;
-            animation: fadeInUp 0.6s ease both;
-        }
-
-        .course-header {
-            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-            border-radius: 20px;
-            padding: 40px 30px;
-            margin-bottom: 40px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-        }
-
-        .circle-progress-wrapper {
-            display: inline-flex;
-            align-items: center;
-            gap: 15px;
-            margin-left: 20px;
-            padding: 12px 20px;
-            background: #ffffff;
-            border-radius: 50px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
-
-        .circle-progress {
-            position: relative;
-            width: 60px;
-            height: 60px;
-        }
-
-        .circle-progress svg {
-            transform: rotate(-90deg);
-            width: 100%;
-            height: 100%;
-        }
-
-        .circle-progress-bg {
-            fill: none;
-            stroke: #e9ecef;
-            stroke-width: 6;
-        }
-
-        .circle-progress-fill {
-            fill: none;
-            stroke: url(#progressGradient);
-            stroke-width: 6;
-            stroke-linecap: round;
-            transition: stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .circle-progress-text {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-weight: 700;
-            font-size: 1rem;
-            color: #667eea;
-        }
-
-        .progress-stats {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        .progress-stats-label {
-            font-size: 0.75rem;
-            color: #6c757d;
-            font-weight: 500;
-        }
-
-        .progress-stats-value {
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: #212529;
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-    </style>
+    .course-celebration {
+        margin: 0 0 28px; padding: 22px 26px; text-align: center;
+        border-radius: var(--radius-lg); border: 1px solid rgba(255, 176, 32, .35);
+        background: linear-gradient(135deg, rgba(255,176,32,.18), rgba(84,214,180,.12));
+        animation: celebration-pop .6s cubic-bezier(.22,.61,.36,1);
+    }
+    .course-celebration h2 { font-size: 1.5rem; margin-bottom: .4rem; color: var(--heading); }
+    .course-celebration p { margin: 0; color: var(--text-muted); }
+    @keyframes celebration-pop {
+        from { opacity: 0; transform: translateY(12px) scale(.98); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+</style>
 {% endblock %}
 
 {% block content %}
-    <div class="container py-4">
-        <div class="course-header text-center">
-            <h1 class="fw-bold mb-3">
-                {{ course.name }}
-            </h1>
-            <div class="d-flex justify-content-center align-items-center flex-wrap gap-3">
-                <div class="circle-progress-wrapper">
-                    <div class="circle-progress">
-                        <svg viewBox="0 0 36 36">
-                            <defs>
-                                <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                                    <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
-                                    <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
-                                </linearGradient>
-                            </defs>
-                            <circle class="circle-progress-bg" cx="18" cy="18" r="15"></circle>
-                            <circle class="circle-progress-fill" cx="18" cy="18" r="15"
-                                    stroke-dasharray="{{ circle_dasharray|floatformat:1 }} {{ circle_circumference }}"
-                                    stroke-dashoffset="0"></circle>
-                        </svg>
-                        <div class="circle-progress-text">{{ total_progress }}%</div>
-                    </div>
-                    <div class="progress-stats">
-                        <div class="progress-stats-label">Прогресс</div>
-                        <div class="progress-stats-value">{{ total_completed_count }}/{{ total_lessons_count }}</div>
-                    </div>
+<div class="container">
+    <div class="course-header text-center">
+        <h1>{{ course.name }}</h1>
+        <div class="d-flex justify-content-center">
+            <div class="circle-progress-wrapper">
+                <div class="circle-progress" style="--progress: {{ total_progress }}">
+                    <div class="circle-progress-ring" aria-hidden="true"></div>
+                    <div class="circle-progress-text">{{ total_progress }}%</div>
+                </div>
+                <div class="progress-stats">
+                    <div class="progress-stats-label">Прогресс</div>
+                    <div class="progress-stats-value">{{ total_completed_count }}/{{ total_lessons_count }}</div>
                 </div>
             </div>
-            <p class="text-muted mt-4 mb-0">{{ course.description }}</p>
         </div>
+        <p class="desc">{{ course.description }}</p>
+    </div>
 
-        {% if modules %}
-            <div class="module-grid">
-                {% for module in modules %}
-                    {% if module.is_available %}
-                        <a href="{% url 'lesson:module_detail' course.name module.module %}"
-                           style="text-decoration: none; color: inherit;">
-                            <div class="module-card" data-delay style="--delay-index: {{ forloop.counter0 }};">
-                                <img src="{{ module.module.image.url|default:'/static/images/placeholder.svg' }}"
-                                     alt="{{ module.module.title }}">
-                                <h5>{{ module.module.title }}</h5>
-                                <div class="module-status">
-                                    <div class="module-progress-info">
-                                        <span>
-                                            {{ module.completed_lessons }}/{{ module.total_lessons }}
-                                            {{ module.total_lessons|pluralize_lessons }}
-                                        </span>
-                                        <span class="module-progress-percent">{{ module.progress }}%</span>
-                                    </div>
-                                    <div class="progress">
-                                        <div class="progress-bar" style="width: {{ module.progress }}%"></div>
-                                    </div>
-                                    {% if module.completed %}
-                                        <div class="module-completed-badge">
-                                            <span>✓</span>
-                                            <span>Пройден</span>
-                                        </div>
-                                    {% else %}
-                                        <div class="module-in-progress-badge">
-                                            <span>⟳</span>
-                                            <span>В процессе</span>
-                                        </div>
-                                    {% endif %}
-                                </div>
-                                <div class="module-hover-info">
-                                    {{ module.total_lessons|pluralize_lessons }}
-                                    · {{ module.progress }}%
-                                </div>
-                            </div>
-                        </a>
-                    {% else %}
-                        {# Заблокированный модуль - без ссылки и с серым стилем #}
-                        <div class="module-card locked-module" data-delay style="--delay-index: {{ forloop.counter0 }};">
-                            <img src="{{ module.module.image.url|default:'/static/images/placeholder.svg' }}"
-                                 alt="{{ module.module.title }}">
-                            <h5>{{ module.module.title }}</h5>
-                            <div class="module-status">
-                                <div class="module-progress-info">
-                                    <span>
-                                        {{ module.completed_lessons }}/{{ module.total_lessons }}
-                                        {{ module.total_lessons|pluralize_lessons }}
-                                    </span>
-                                    <span class="module-progress-percent">{{ module.progress }}%</span>
-                                </div>
-                                <div class="progress">
-                                    <div class="progress-bar" style="width: {{ module.progress }}%"></div>
-                                </div>
-                                <div class="module-locked-badge">
-                                    <span>🔒</span>
-                                    <span>Заблокирован</span>
-                                </div>
-                            </div>
-                            <div class="module-hover-info">
-                                {{ module.total_lessons|pluralize_lessons }}
-                                · {{ module.progress }}%
-                            </div>
-                        </div>
-                    {% endif %}
-                {% endfor %}
-            </div>
-        {% else %}
-            <div class="empty-message">
-                В этом курсе пока нет модулей.<br>Они скоро появятся!
-            </div>
-        {% endif %}
+    {% if show_celebration %}
+    <div class="course-celebration reveal in">
+        <h2><i class="bi bi-trophy-fill me-2" style="color: var(--brand);"></i>Курс пройден!</h2>
+        <p>Вы завершили все {{ total_lessons_count }} {{ total_lessons_count|pluralize_lessons }} — отличная работа.</p>
+    </div>
+    {% endif %}
 
-{% if course not in user.courses_learn.all %}
-        <div class="text-center py-4">
-            <form method="POST">
-                {% csrf_token %}
-                <button class="btn btn-primary btn-lg" type="submit">Отправить заявку на курс</button>
-            </form>
+    {% if access != 'open' %}
+    <div class="enroll-panel reveal in">
+        <div class="enroll-panel__info">
+            <div class="enroll-price">{% if is_free %}Бесплатно{% else %}{{ course.price }} ₽<small> / весь курс</small>{% endif %}</div>
+            <div class="enroll-note">
+                {% if access == 'pending' %}
+                    Ваша заявка отправлена администратору и ждёт одобрения.
+                {% elif access == 'rejected' %}
+                    Заявка была отклонена. Вы можете подать её снова.
+                {% else %}
+                    Запишитесь на курс — доступ откроется после одобрения.
+                {% endif %}
+            </div>
+        </div>
+        <div class="enroll-panel__action">
+            {% if access == 'pending' %}
+                <span class="enroll-state pending"><i class="bi bi-hourglass-split"></i> Заявка на рассмотрении</span>
+            {% else %}
+                <form method="post">
+                    {% csrf_token %}
+                    <button class="btn btn-primary btn-lg" type="submit">
+                        <i class="bi bi-{% if access == 'rejected' %}arrow-repeat{% else %}bookmark-plus{% endif %} me-2"></i>
+                        {% if access == 'rejected' %}Подать заявку снова{% else %}Записаться на курс{% endif %}
+                    </button>
+                </form>
+            {% endif %}
         </div>
     </div>
     {% endif %}
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css"></script>
+    {% if modules %}
+        <div class="module-grid">
+            {% for module in modules %}
+                {% if module.is_available %}
+                    <a href="{% url 'lesson:module_detail' course.slug module.module.slug %}" style="text-decoration: none; color: inherit;" class="reveal" data-delay="{{ forloop.counter0 }}">
+                        <div class="module-card">
+                            <div class="module-thumb">
+                                <img src="{{ module.module.image.url|default:'/static/images/placeholder.svg' }}" alt="{{ module.module.title }}">
+                            </div>
+                            <h5>{{ module.module.title }}</h5>
+                            <div class="module-status">
+                                <div class="module-progress-info">
+                                    <span>{{ module.completed_lessons }}/{{ module.total_lessons }} {{ module.total_lessons|pluralize_lessons }}</span>
+                                    <span class="module-progress-percent">{{ module.progress }}%</span>
+                                </div>
+                                <div class="progress"><div class="progress-bar" style="width: {{ module.progress }}%"></div></div>
+                                {% if module.completed %}
+                                    <div class="badge-pill module-completed-badge"><i class="bi bi-check-lg"></i> Пройден</div>
+                                {% else %}
+                                    <div class="badge-pill module-in-progress-badge"><i class="bi bi-arrow-repeat"></i> В процессе</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </a>
+                {% else %}
+                    <div class="module-card locked-module reveal in" data-delay="{{ forloop.counter0 }}">
+                        <div class="module-thumb">
+                            <img src="{{ module.module.image.url|default:'/static/images/placeholder.svg' }}" alt="{{ module.module.title }}">
+                        </div>
+                        <h5>{{ module.module.title }}</h5>
+                        <div class="module-status">
+                            <div class="module-progress-info">
+                                <span>{{ module.completed_lessons }}/{{ module.total_lessons }} {{ module.total_lessons|pluralize_lessons }}</span>
+                                <span class="module-progress-percent">{{ module.progress }}%</span>
+                            </div>
+                            <div class="progress"><div class="progress-bar" style="width: {{ module.progress }}%"></div></div>
+                            <div class="badge-pill module-locked-badge"><i class="bi bi-lock-fill"></i> Заблокирован</div>
+                        </div>
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-message">В этом курсе пока нет модулей.<br>Они скоро появятся!</div>
+    {% endif %}
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if show_celebration %}
+<script src="{% static 'js/course-celebration.js' %}"></script>
+{% endif %}
 {% endblock %}

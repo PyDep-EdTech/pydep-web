@@ -1,42 +1,14 @@
-from rest_framework.viewsets import ModelViewSet
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
-from .serializers import (
-    UsersSerializer, CourseGetSerializer, CoursePostSerializer,
-    ModuleGetSerializer, ModulePostSerializer, LessonGetSerializer,
-    LessonPostSerializer,
-)
-
-from users.models import CustomUser
-from lesson.models import Lesson, Module, Course
+from .serializers import CourseReadSerializer
+from lesson.models import Course
 
 
-class UserViewSet(ModelViewSet):
-    serializer_class = UsersSerializer
-    queryset = CustomUser.objects.all()
+class CourseListView(APIView):
+    """Список опубликованных курсов (read-only)."""
 
-
-class CourseViewSet(ModelViewSet):
-    queryset = Course.objects.all()
-
-    def get_serializer_class(self):
-        if self.action in ('create', 'update', 'partial_update'):
-            return CoursePostSerializer
-        return CourseGetSerializer
-
-
-class ModuleViewSet(ModelViewSet):
-    queryset = Module.objects.all()
-
-    def get_serializer_class(self):
-        if self.action in ('create', 'update', 'partial_update'):
-            return ModulePostSerializer
-        return ModuleGetSerializer
-
-
-class LessonViewSet(ModelViewSet):
-    queryset = Lesson.objects.all()
-
-    def get_serializer_class(self):
-        if self.action in ('create', 'update', 'partial_update'):
-            return LessonPostSerializer
-        return LessonGetSerializer
+    def get(self, request):
+        courses = Course.objects.filter(is_published=True)
+        serializer = CourseReadSerializer(courses, many=True)
+        return Response(serializer.data)

@@ -9,12 +9,15 @@
     .edit-card {
         max-width: 700px;
         margin: auto;
-        padding: 30px;
-        background-color: #ffffff;
-        border-radius: 20px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        padding: 34px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        backdrop-filter: blur(14px);
+        box-shadow: var(--shadow);
         animation: fadeInUp 0.7s ease-out both;
     }
+    @keyframes fadeInUp { from { opacity:0; transform: translateY(20px);} to { opacity:1; transform: none;} }
 
     @keyframes fadeInZoom {
         from {
@@ -46,7 +49,8 @@
         max-height: 80vw;
         object-fit: cover;
         border-radius: 50%;
-        border: 4px solid #007bff;
+        border: 4px solid var(--brand-strong);
+        box-shadow: 0 10px 30px -8px rgba(255, 176, 32,.6);
         transition: transform 0.3s ease;
         display: block;
     }

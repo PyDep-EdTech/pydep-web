@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 64" fill="none" role="img" aria-label="PyDep PD">
+  <defs>
+    <linearGradient id="g2" x1="0" y1="0" x2="160" y2="64" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#6d5efc"/>
+      <stop offset=".55" stop-color="#8b7bff"/>
+      <stop offset="1" stop-color="#3b9eff"/>
+    </linearGradient>
+    <linearGradient id="g2b" x1="88" y1="8" x2="152" y2="56" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#fff" stop-opacity=".95"/>
+      <stop offset="1" stop-color="#c9bcff"/>
+    </linearGradient>
+  </defs>
+  <!-- P: bold geometric -->
+  <path d="M8 8h40c18.8 0 32 11.6 32 28.5C80 53.4 66.8 64 48 64H20V8h-12zm12 12v32h16c10.6 0 17-6.2 17-16.5S58.6 20 48 20H20z" fill="url(#g2)"/>
+  <!-- D: linked via shared negative space -->
+  <path d="M84 8h28c20.2 0 36 14.2 36 32S132.2 72 112 72H84V8zm14 12v40h14c12.8 0 21-8.8 21-20s-8.2-20-21-20h-14z" fill="url(#g2b)"/>
+</svg>

@@ -1,0 +1,15 @@
+<script>
+(function () {
+    var theme = 'dark';
+    try {
+        var saved = localStorage.getItem('pydep-theme');
+        if (saved === 'light' || saved === 'dark') {
+            theme = saved;
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+            theme = 'light';
+        }
+    } catch (e) {}
+    document.documentElement.setAttribute('data-theme', theme);
+    document.documentElement.setAttribute('data-bs-theme', theme);
+})();
+</script>

@@ -1,348 +1,255 @@
 {% extends 'base.html' %}
 {% load static %}
 {% load custom_filters %}
-{% block title %}
-    Курсы
-{% endblock %}
+{% block title %}Курсы — PyDep{% endblock %}
 
 {% block static %}
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        .course-card {
-            border-radius: 15px;
-            overflow: hidden;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            margin-bottom: 20px;
-            background-color: #ffffff;
-            opacity: 0;
-            transform: translateY(20px);
-            animation: fadeInUp 0.6s ease forwards;
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-        }
+<link href="{% static 'css/course-search.css' %}" rel="stylesheet">
+<style>
+    .courses-head { padding: 56px 0 12px; }
+    .courses-head h1 { font-size: clamp(2.1rem, 4.5vw, 3.2rem); margin-bottom: .6rem; }
+    .courses-head p { color: var(--text-muted); font-size: 1.1rem; max-width: 560px; }
 
-        .course-card[data-delay] {
-            animation-delay: calc(var(--delay-index) * 0.1s);
-        }
-
-        .course-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
-        }
-
-        .course-content {
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            height: 100%;
-        }
-
-        .course-title {
-            font-size: 1.25rem;
-            font-weight: bold;
-            min-height: 3.6em;
-            line-height: 1.2;
-        }
-
-        .course-meta {
-            font-size: 0.75rem;
-            color: #6c757d;
-            margin-bottom: 8px;
-        }
-
-        .course-image-wrapper {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 140px;
-            margin-bottom: 20px;
-        }
-
-        .course-image-wrapper img {
-            max-height: 100%;
-            max-width: 100%;
-            object-fit: contain;
-        }
-
-        .btn-course-detail {
-            border-radius: 15px;
-            margin-top: auto;
-        }
-
-        .empty-message {
-            max-width: 600px;
-            margin: 80px auto;
-            padding: 40px;
-            text-align: center;
-            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-            border-radius: 20px;
-            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.05);
-            font-size: 1.3rem;
-            color: #495057;
-            animation: fadeInUp 0.8s ease both;
-        }
-
-        .row.gy-4 > [class*='col-'] {
-            margin-bottom: 1.5rem;
-        }
-
-        .filters-section {
-            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-            border-radius: 20px;
-            padding: 30px;
-            margin-bottom: 40px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-        }
-
-        .category-filters {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            margin-bottom: 25px;
-        }
-
-        .category-filter-item {
-            position: relative;
-        }
-
-        .category-filter-item input[type="checkbox"] {
-            position: absolute;
-            opacity: 0;
-            cursor: pointer;
-            height: 0;
-            width: 0;
-        }
-
-        .category-filter-label {
-            display: inline-block;
-            padding: 12px 24px;
-            font-size: 0.95rem;
-            font-weight: 500;
-            color: #495057;
-            background: #ffffff;
-            border: 2px solid #e9ecef;
-            border-radius: 50px;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            user-select: none;
-            white-space: nowrap;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-        }
-
-        .category-filter-label:hover {
-            border-color: #6c757d;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        }
-
-        .category-filter-item input[type="checkbox"]:checked + .category-filter-label {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: #ffffff;
-            border-color: transparent;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-            transform: translateY(-2px);
-        }
-
-        .category-filter-item input[type="checkbox"]:checked + .category-filter-label:hover {
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
-            transform: translateY(-3px);
-        }
-
-        .reset-filters-btn {
-            padding: 12px 24px;
-            font-size: 0.95rem;
-            font-weight: 500;
-            color: #6c757d;
-            background: #ffffff;
-            border: 2px solid #e9ecef;
-            border-radius: 50px;
-            text-decoration: none;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-        }
-
-        .reset-filters-btn:hover {
-            background: #f8f9fa;
-            border-color: #dee2e6;
-            color: #495057;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        }
-
-        .search-wrapper {
-            position: relative;
-            margin-bottom: 0;
-        }
-
-        .search-input {
-            padding: 16px 20px;
-            padding-left: 50px;
-            font-size: 1rem;
-            border: 2px solid #e9ecef;
-            border-radius: 50px;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            background: #ffffff;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-        }
-
-        .search-input:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
-            transform: translateY(-2px);
-        }
-
-        .search-icon {
-            position: absolute;
-            left: 18px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #6c757d;
-            font-size: 1.1rem;
-            pointer-events: none;
-        }
-
-        .search-btn {
-            position: absolute;
-            right: 8px;
-            top: 50%;
-            transform: translateY(-50%);
-            padding: 10px 24px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border: none;
-            border-radius: 50px;
-            color: #ffffff;
-            font-weight: 500;
-            font-size: 0.95rem;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 2px 10px rgba(102, 126, 234, 0.3);
-        }
-
-        .search-btn:hover {
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-            transform: translateY(-50%) translateY(-2px);
-        }
-
-        .search-btn:active {
-            transform: translateY(-50%) translateY(0);
-        }
-
-        .filters-title {
-            font-size: 1.3rem;
-            font-weight: 600;
-            color: #212529;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .filters-title::before {
-
-            font-size: 1.2rem;
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-    </style>
+    .course-card {
+        height: 100%;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        display: flex; flex-direction: column;
+        transition: transform .35s cubic-bezier(.22,.61,.36,1), border-color .3s ease, box-shadow .35s ease;
+    }
+    .course-card:hover {
+        transform: translateY(-8px);
+        border-color: var(--border-strong);
+        box-shadow: var(--shadow-glow);
+    }
+    .course-image-wrapper {
+        position: relative;
+        aspect-ratio: 16 / 10;
+        overflow: hidden;
+        background: var(--surface-solid);
+        border-bottom: 1px solid var(--border);
+    }
+    .course-image-wrapper::after {
+        content: '';
+        position: absolute; inset: 0;
+        background: linear-gradient(180deg, transparent 55%, rgba(0,0,0,.18) 100%);
+        pointer-events: none;
+    }
+    .course-image-wrapper img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+        display: block;
+        transition: transform .45s cubic-bezier(.22,.61,.36,1);
+    }
+    .course-card:hover .course-image-wrapper img { transform: scale(1.05); }
+    .course-content { padding: 22px; display: flex; flex-direction: column; flex: 1; }
+    .course-meta {
+        display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap;
+        font-size: .76rem; color: var(--text-muted); margin-bottom: 12px;
+    }
+    .course-meta .tag {
+        padding: 3px 10px; border-radius: 999px; background: var(--surface-2);
+        border: 1px solid var(--border); font-weight: 600;
+    }
+    .course-title { font-family: 'Bricolage Grotesque', sans-serif; font-size: 1.2rem; font-weight: 600; color: var(--heading); margin-bottom: 14px; line-height: 1.25; }
+    .course-price { margin-top: auto; margin-bottom: 16px; }
+    .course-price .main { font-size: 1.25rem; font-weight: 700; color: var(--heading); }
+    .course-price .main span { font-size: .85rem; color: var(--text-muted); font-weight: 500; }
+    .course-price .sub { font-size: .82rem; color: var(--text-dim); }
+    .btn-course-detail { width: 100%; }
+</style>
 {% endblock %}
 
 {% block content %}
-    <div class="container py-4">
+<div class="container">
+    <div class="courses-head">
+        <h1>Выбери своё <span class="text-gradient">направление</span></h1>
+        <p>Курсы по программированию с практикой и поддержкой наставников — от первых строк кода до реальных проектов.</p>
+    </div>
 
-            {#        {% if categories %}#}
-            {#        <div class="category-filters">#}
-            {#            {% for cat in categories %}#}
-            {#                <a href="{% url "lesson:category" cat.slug %}" class="{% if cat == category %}active{% endif %}">{{ cat.name }}</a>#}
-            {#            {% endfor %}#}
-            {#            <a href="{% url "lesson:courses" %}" class="btn btn-light">Сбросить фильтры</a>#}
-            {#        </div>#}
-            {#        {% endif %}#}
+    <form method="get"
+          id="courseSearchForm"
+          class="catalog-toolbar"
+          action="{% url 'lesson:courses' %}"
+          data-search-url="{% url 'lesson:course_search' %}">
+        <div class="catalog-search-panel">
+            <div class="catalog-search-field">
+                <i class="bi bi-search"></i>
+                <input type="search"
+                       name="q"
+                       id="courseSearchInput"
+                       class="form-control catalog-search-input"
+                       placeholder="Поиск курса…"
+                       value="{{ search_query }}"
+                       autocomplete="off"
+                       aria-label="Поиск курсов"
+                       aria-autocomplete="list"
+                       aria-controls="courseSearchSuggestions">
+                <div class="catalog-search-actions-inline">
+                    <button type="button"
+                            id="catalogFiltersToggle"
+                            class="catalog-filters-toggle"
+                            aria-label="Фильтры"
+                            aria-expanded="{% if filters_expanded %}true{% else %}false{% endif %}"
+                            aria-controls="catalogFiltersPanel">
+                        <i class="bi bi-sliders"></i>
+                        <span class="catalog-filters-count" id="catalogFiltersCount"{% if not active_filter_count %} hidden{% endif %}>{{ active_filter_count }}</span>
+                    </button>
+                    <button type="submit" class="catalog-search-submit">Найти</button>
+                </div>
+                <div id="courseSearchSuggestions" class="catalog-search-suggestions" hidden role="listbox"></div>
+            </div>
 
-            <form method="POST">
-                {% csrf_token %}
-                <div class="filters-section">
-                    <div class="filters-title">Фильтры и поиск</div>
-
-                    {% if categories %}
-                        <div class="category-filters">
-                            {% for cat in categories %}
-                                {% if cat.slug in selected_category_slugs %}
-                                    <div class="category-filter-item">
-                                        <input type="checkbox" id="cat_{{ cat.slug }}" name="category"
-                                               value="{{ cat.slug }}" checked>
-                                        <label for="cat_{{ cat.slug }}" class="category-filter-label">{{ cat.name }}</label>
-                                    </div>
-                                {% else %}
-                                    <div class="category-filter-item">
-                                        <input type="checkbox" id="cat_{{ cat.slug }}" name="category"
-                                               value="{{ cat.slug }}">
-                                        <label for="cat_{{ cat.slug }}" class="category-filter-label">{{ cat.name }}</label>
-                                    </div>
-                                {% endif %}
-                            {% endfor %}
-                            <a href="{% url "lesson:courses" %}" class="reset-filters-btn">
-                                <span>↻</span>
-                                <span>Сбросить</span>
-                            </a>
-                        </div>
-                    {% endif %}
-
-                    <div class="search-wrapper">
-                        <span class="search-icon">🔍</span>
-                        <input type="search" name="q" class="form-control search-input" 
-                               placeholder="Поиск по названию курса..." 
-                               aria-label="Search"
-                               value="{{ request.GET.q|default:'' }}">
-                        <button type="submit" class="search-btn">Найти</button>
+            <div id="catalogFiltersPanel"
+                 class="catalog-filters-panel{% if filters_expanded %} is-open{% endif %}"
+                 aria-hidden="{% if filters_expanded %}false{% else %}true{% endif %}">
+            <div class="catalog-filters-panel__inner">
+            <div class="catalog-filters-grid">
+                {% if categories %}
+                <div class="catalog-filter-block">
+                    <label>Категория</label>
+                    <div class="catalog-chip-row">
+                        {% for cat in categories %}
+                        <input class="catalog-auto-submit" type="checkbox"
+                               id="cat_{{ cat.slug }}" name="category" value="{{ cat.slug }}"
+                               {% if cat.slug in selected_category_slugs %}checked{% endif %}>
+                        <label for="cat_{{ cat.slug }}" class="catalog-chip">{{ cat.name }}</label>
+                        {% endfor %}
                     </div>
                 </div>
-            </form>
+                {% endif %}
 
-            <div class="row gy-4">
-                {% for course in courses %}
-                    <div class="col-md-6 col-lg-4 col-xl-3 d-flex">
-                        <div class="course-card w-100" data-delay style="--delay-index: {{ forloop.counter0 }};">
-                            <div class="course-content">
-                                <div class="course-meta">
-                                    {{ course.category }} · {{ course.duration|pluralize_months }} · {{ course.level }}
-                                </div>
-                                <div class="course-title mb-3">{{ course.name }}</div>
-                                <div class="course-image-wrapper">
-                                    <img src="{{ course.image.url }}" alt="{{ course.name }}">
-                                </div>
-                                <div>
-                                    <div class="fw-bold mb-1">от {{ course.monthly_price }} ₽/мес</div>
-                                    <div class="text-muted small">или сразу {{ course.price }} ₽</div>
-                                </div>
-                                <a href="{% url 'lesson:course_detail' course.name %}"
-                                   class="btn btn-outline-primary btn-course-detail">Подробнее</a>
-                            </div>
-                        </div>
+                <div class="catalog-filter-block">
+                    <label>Уровень</label>
+                    <div class="catalog-chip-row">
+                        {% for lvl in levels %}
+                        <input class="catalog-auto-submit" type="radio"
+                               id="level_{{ forloop.counter }}" name="level" value="{{ lvl }}"
+                               {% if selected_level == lvl %}checked{% endif %}>
+                        <label for="level_{{ forloop.counter }}" class="catalog-chip">{{ lvl }}</label>
+                        {% endfor %}
+                        <input class="catalog-auto-submit" type="radio"
+                               id="level_any" name="level" value=""
+                               {% if not selected_level %}checked{% endif %}>
+                        <label for="level_any" class="catalog-chip">Любой</label>
                     </div>
-                {% empty %}
-                    <div class="empty-message">
-                        <p class="mb-0">Пока что курсы не добавлены.<br>Пожалуйста, загляните позже или свяжитесь с
-                            администратором.</p>
+                </div>
+
+                <div class="catalog-filter-block">
+                    <label>Язык / стек</label>
+                    <div class="catalog-chip-row">
+                        {% for lang in languages %}
+                        <input class="catalog-auto-submit" type="radio"
+                               id="lang_{{ forloop.counter }}" name="lang" value="{{ lang }}"
+                               {% if selected_language == lang %}checked{% endif %}>
+                        <label for="lang_{{ forloop.counter }}" class="catalog-chip">{{ lang }}</label>
+                        {% endfor %}
+                        <input class="catalog-auto-submit" type="radio"
+                               id="lang_any" name="lang" value=""
+                               {% if not selected_language %}checked{% endif %}>
+                        <label for="lang_any" class="catalog-chip">Все</label>
                     </div>
+                </div>
+
+                <div class="catalog-filter-block">
+                    <label for="catalogSort">Сортировка</label>
+                    <select name="sort" id="catalogSort" class="form-select catalog-sort-select catalog-auto-submit">
+                        {% for key, label in sort_choices.items %}
+                        <option value="{{ key }}" {% if selected_sort == key %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            </div>
+            </div>
+
+            <div class="catalog-active-bar">
+                {% if search_query %}
+                <span class="catalog-active-chip"><span>«{{ search_query }}»</span></span>
+                {% endif %}
+                {% for slug in selected_category_slugs %}
+                    {% for cat in categories %}
+                        {% if cat.slug == slug %}
+                        <span class="catalog-active-chip">{{ cat.name }}</span>
+                        {% endif %}
+                    {% endfor %}
                 {% endfor %}
-    {% include 'lesson/includes/paginator.html' %}
+                {% if selected_level %}
+                <span class="catalog-active-chip">{{ selected_level }}</span>
+                {% endif %}
+                {% if selected_language %}
+                <span class="catalog-active-chip">{{ selected_language }}</span>
+                {% endif %}
+                {% if search_query or selected_category_slugs or selected_level or selected_language %}
+                <a href="{% url 'lesson:courses' %}" class="catalog-reset-link">
+                    <i class="bi bi-arrow-counterclockwise"></i> Сбросить всё
+                </a>
+                {% endif %}
             </div>
         </div>
+    </form>
+
+    <div class="catalog-results-bar">
+        <div class="catalog-results-count">
+            Найдено <strong>{{ result_count }}</strong>
+            {% if result_count == 1 %}курс{% elif result_count >= 2 and result_count <= 4 %}курса{% else %}курсов{% endif %}
+        </div>
     </div>
+
+    <div class="row gy-4">
+        {% for course in courses %}
+            {% with hit=search_hit_map|get_item:course.id %}
+            <div class="col-md-6 col-lg-4 col-xl-3 d-flex reveal" data-delay="{{ forloop.counter0 }}">
+                <div class="course-card w-100{% if hit %} is-search-hit{% endif %}">
+                    <div class="course-image-wrapper">
+                        <img src="{% if course.image %}{{ course.image.url }}{% else %}{% static 'img/pydep.svg' %}{% endif %}" alt="{{ course.name }}">
+                    </div>
+                    <div class="course-content">
+                        <div class="course-meta">
+                            <span class="tag">{{ course.category }}</span>
+                            <span class="tag">{{ course.duration|pluralize_months }}</span>
+                            <span class="tag">{{ course.level }}</span>
+                        </div>
+                        <div class="course-title">{{ course.name }}</div>
+                        <div class="course-price">
+                            {% if course.is_free %}
+                            <div class="main">Бесплатно</div>
+                            {% else %}
+                            <div class="main">от {{ course.monthly_price }} ₽<span> /мес</span></div>
+                            <div class="sub">или сразу {{ course.price }} ₽</div>
+                            {% endif %}
+                        </div>
+                        <a href="{% url 'lesson:course_detail' course.slug %}" class="btn btn-primary btn-course-detail">
+                            Подробнее <i class="bi bi-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endwith %}
+        {% empty %}
+            <div class="catalog-empty">
+                <i class="bi bi-search"></i>
+                {% if search_query %}
+                <h3>Ничего не нашли</h3>
+                <p>Попробуйте другое слово — например <strong>git</strong>, <strong>python</strong> или <strong>sql</strong>.<br>Или <a href="{% url 'lesson:courses' %}">сбросьте фильтры</a>.</p>
+                {% else %}
+                <h3>Курсы скоро появятся</h3>
+                <p>Пока каталог пуст. Загляните позже или свяжитесь с администратором.</p>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+
+    <div class="mt-4">
+        {% include 'lesson/includes/paginator.html' %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/course-search.js' %}"></script>
 {% endblock %}

@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 320" role="img" aria-label=""8?K 40==KE Python">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1E1E21"/>
+      <stop offset="100%" stop-color="#26262A"/>
+    </linearGradient>
+  </defs>
+  <rect width="720" height="320" rx="16" fill="url(#bg)"/>
+  <text x="360" y="42" text-anchor="middle" fill="#F1EFEA" font-family="Inter, system-ui, sans-serif" font-size="22" font-weight="700">A=>2=K5 B8?K 2 Python</text>
+
+  <rect x="40" y="80" width="140" height="88" rx="12" fill="#306998" opacity="0.9"/>
+  <text x="110" y="118" text-anchor="middle" fill="#fff" font-family="JetBrains Mono, monospace" font-size="18" font-weight="700">int</text>
+  <text x="110" y="148" text-anchor="middle" fill="#E2E0DA" font-family="Inter, sans-serif" font-size="14">42, -7, 0</text>
+
+  <rect x="200" y="80" width="140" height="88" rx="12" fill="#FFB020" opacity="0.95"/>
+  <text x="270" y="118" text-anchor="middle" fill="#1A1407" font-family="JetBrains Mono, monospace" font-size="18" font-weight="700">float</text>
+  <text x="270" y="148" text-anchor="middle" fill="#1A1407" font-family="Inter, sans-serif" font-size="14">3.14, 0.5</text>
+
+  <rect x="360" y="80" width="140" height="88" rx="12" fill="#54D6B4" opacity="0.9"/>
+  <text x="430" y="118" text-anchor="middle" fill="#0f1f1a" font-family="JetBrains Mono, monospace" font-size="18" font-weight="700">str</text>
+  <text x="430" y="148" text-anchor="middle" fill="#0f1f1a" font-family="Inter, sans-serif" font-size="14">'@825B'</text>
+
+  <rect x="520" y="80" width="160" height="88" rx="12" fill="#9B59B6" opacity="0.9"/>
+  <text x="600" y="118" text-anchor="middle" fill="#fff" font-family="JetBrains Mono, monospace" font-size="18" font-weight="700">bool</text>
+  <text x="600" y="148" text-anchor="middle" fill="#E2E0DA" font-family="Inter, sans-serif" font-size="14">True, False</text>
+
+  <text x="360" y="220" text-anchor="middle" fill="#989790" font-family="Inter, sans-serif" font-size="15">type(7=0G5=85)  C7=0BL B8? ?5@5<5==>9</text>
+  <text x="360" y="252" text-anchor="middle" fill="#67665F" font-family="JetBrains Mono, monospace" font-size="14">age = 25          # int</text>
+  <text x="360" y="278" text-anchor="middle" fill="#67665F" font-family="JetBrains Mono, monospace" font-size="14">name = "=O"      # str</text>
+</svg>

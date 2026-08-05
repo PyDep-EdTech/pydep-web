@@ -1,0 +1,7 @@
+{% extends 'base.html' %}
+
+{% block title %}Доступ закрыт — PyDep{% endblock %}
+
+{% block content %}
+{% include 'includes/error_page.html' with code='403' icon='shield-lock' title='Доступ закрыт' message='У вас нет прав для просмотра этой страницы. Возможно, нужно войти в аккаунт или записаться на курс.' show_courses=True show_signin=True %}
+{% endblock %}

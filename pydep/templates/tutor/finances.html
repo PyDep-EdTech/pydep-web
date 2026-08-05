@@ -1,0 +1,117 @@
+{% extends 'tutor/base.html' %}
+
+{% block title %}Финансы — Мой репетитор{% endblock %}
+
+{% block content %}
+<section class="py-5">
+  <div class="container tutor-page px-4 px-lg-3">
+    {% if messages %}
+      {% for message in messages %}<div class="alert alert-{{ message.tags }}">{{ message }}</div>{% endfor %}
+    {% endif %}
+
+    <div class="tutor-page-head">
+      <h1 class="fw-bold"><span class="text-gradient">Оплата</span> занятий</h1>
+      <p>Задолженности и доход — отдельно от расписания.</p>
+    </div>
+
+    {% if student_debt.count %}
+    <div class="tutor-card mb-4">
+      <div class="tutor-card__head">
+        <h2 class="tutor-card__title"><i class="bi bi-wallet2 me-1" style="color:#fca5a5"></i> Моя задолженность</h2>
+      </div>
+      <div class="tutor-metrics" style="padding:1rem 1.15rem 0;">
+        <div class="tutor-metric is-debt"><div class="v">{{ student_debt.total }} ₽</div><div class="l">к оплате</div></div>
+        <div class="tutor-metric"><div class="v">{{ student_debt.count }}</div><div class="l">занятий</div></div>
+      </div>
+      <div class="tutor-card__body">
+        {% for item in student_debt.items %}
+        <div class="fin-row">
+          <div class="fin-row__main">
+            <div class="fin-row__title">{{ item.lesson.subject }}</div>
+            <div class="fin-row__meta">{{ item.lesson.date|date:"d.m.Y" }} · {{ item.lesson.teacher.get_full_name|default:item.lesson.teacher.username }}</div>
+          </div>
+          <strong style="color:#fca5a5;">{{ item.cost }} ₽</strong>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    {% if is_teacher and teacher_finance %}
+    <div class="tutor-toolbar">
+      <form method="get" class="d-flex align-items-center gap-2">
+        <select name="month" class="form-select form-select-sm" onchange="this.form.submit()">
+          {% for m in month_choices %}
+          <option value="{{ m.value }}" {% if m.value == finance_month %}selected{% endif %}>{{ m.label }}</option>
+          {% endfor %}
+        </select>
+      </form>
+    </div>
+
+    <div class="tutor-metrics">
+      <div class="tutor-metric is-income"><div class="v">{{ teacher_finance.paid_total }} ₽</div><div class="l">получено</div></div>
+      <div class="tutor-metric is-debt"><div class="v">{{ teacher_finance.unpaid_total }} ₽</div><div class="l">ожидает оплаты</div></div>
+      <div class="tutor-metric"><div class="v">{{ teacher_finance.expected_total }} ₽</div><div class="l">начислено за месяц</div></div>
+    </div>
+
+    {% if unpaid_teacher_items %}
+    <div class="tutor-card mb-4">
+      <div class="tutor-card__head">
+        <h2 class="tutor-card__title">К оплате</h2>
+        <span class="text-muted small">{{ unpaid_teacher_items|length }} занятий</span>
+      </div>
+      <div class="tutor-card__body">
+        {% for item in unpaid_teacher_items %}
+        <div class="fin-row">
+          <div class="fin-row__main">
+            <div class="fin-row__title">{{ item.lesson.subject }}</div>
+            <div class="fin-row__meta">{{ item.lesson.date|date:"d.m.Y" }} · {{ item.lesson.student.get_full_name|default:item.lesson.student.username }}</div>
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            <strong style="color:#fcd34d;">{{ item.cost }} ₽</strong>
+            <form method="post" action="{% url 'tutor:lesson_pay' item.lesson.pk %}">
+              {% csrf_token %}
+              <input type="hidden" name="next" value="{% url 'tutor:finances' %}">
+              <button type="submit" class="btn btn-sm btn-primary">Оплачено</button>
+            </form>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    {% if teacher_finance.paid_items %}
+    <div class="tutor-card">
+      <div class="tutor-card__head">
+        <h2 class="tutor-card__title">Оплачено за месяц</h2>
+        <span class="text-muted small">{{ teacher_finance.paid_count }}</span>
+      </div>
+      <div class="tutor-card__body">
+        {% for item in teacher_finance.paid_items %}
+        <div class="fin-row">
+          <div class="fin-row__main">
+            <div class="fin-row__title">{{ item.lesson.subject }}</div>
+            <div class="fin-row__meta">{{ item.lesson.date|date:"d.m.Y" }} · {{ item.lesson.student.get_full_name|default:item.lesson.student.username }}</div>
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            <strong style="color:#6ee7b7;">{{ item.cost }} ₽</strong>
+            <form method="post" action="{% url 'tutor:lesson_pay' item.lesson.pk %}">
+              {% csrf_token %}
+              <input type="hidden" name="next" value="{% url 'tutor:finances' %}?month={{ finance_month }}">
+              <button type="submit" class="btn btn-sm btn-ghost">Снять</button>
+            </form>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% elif not unpaid_teacher_items and not student_debt.count %}
+    <div class="tutor-empty tutor-card" style="padding:2.5rem;">Нет финансовых записей за выбранный период.</div>
+    {% endif %}
+    {% elif not student_debt.count %}
+    <div class="tutor-empty tutor-card" style="padding:2.5rem;">Нет задолженностей. Финансовая сводка появится после занятий.</div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

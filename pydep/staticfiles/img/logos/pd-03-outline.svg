@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none" role="img" aria-label="PyDep PD">
+  <defs>
+    <linearGradient id="g3" x1="24" y1="20" x2="96" y2="100" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8b7bff"/>
+      <stop offset="1" stop-color="#6d5efc"/>
+    </linearGradient>
+  </defs>
+  <circle cx="60" cy="60" r="54" stroke="url(#g3)" stroke-width="3" opacity=".35"/>
+  <!-- Outline P -->
+  <path d="M36 32h22c12.4 0 20 7.6 20 19s-7.6 19-20 19H48v18H36V32zm12 10v18h10c5.8 0 9-3.2 9-9s-3.2-9-9-9H48z"
+        stroke="url(#g3)" stroke-width="5" stroke-linejoin="round"/>
+  <!-- Outline D -->
+  <path d="M70 32h14c14.2 0 24 10 24 28s-9.8 28-24 28H70V32zm12 10v36h2c8.6 0 13.5-6.4 13.5-18S92.6 42 84 42h-2z"
+        stroke="#fff" stroke-width="5" stroke-linejoin="round" opacity=".92"/>
+</svg>

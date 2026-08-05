@@ -1,0 +1,10 @@
+<span class="platform-icon-wrap platform-icon-wrap--{{ platform|default:'pydep' }}{% if extra_class %} {{ extra_class }}{% endif %}"
+      style="width: {{ size|default:30 }}px; height: {{ size|default:30 }}px;"
+      aria-hidden="true">
+    <span class="platform-icon platform-icon--{{ platform|default:'pydep' }}"></span>
+    {% if platform == 'tutor' %}
+    <span class="platform-icon-eyes platform-icon-eyes--tutor"><i></i><i></i></span>
+    {% elif platform == 'pydep' %}
+    <span class="platform-icon-eyes platform-icon-eyes--pydep"><i></i></span>
+    {% endif %}
+</span>

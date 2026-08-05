@@ -1,0 +1,105 @@
+{% extends 'tutor/base.html' %}
+{% load static %}
+
+{% block title %}Обзор — Мой репетитор{% endblock %}
+
+{% block content %}
+<section class="py-5">
+  <div class="container tutor-page px-4 px-lg-3">
+    {% if messages %}
+      {% for message in messages %}<div class="alert alert-{{ message.tags }}">{{ message }}</div>{% endfor %}
+    {% endif %}
+
+    <div class="tutor-page-head">
+      <h1 class="fw-bold">Привет, <span class="text-gradient">{{ user.first_name|default:user.username }}</span></h1>
+      <p>Краткая сводка — подробности на отдельных страницах.</p>
+    </div>
+
+    {% if pending_requests or pending_invites_count or unpaid_count or teacher_unpaid_count or hw_pending %}
+    <div class="tutor-alert-strip">
+      {% if pending_requests %}<a href="#requests" class="is-warn"><i class="bi bi-envelope"></i> {{ pending_requests|length }} запрос{% if pending_requests|length > 1 %}а{% endif %}</a>{% endif %}
+      {% if pending_invites_count %}<a href="{% url 'tutor:students_manage' %}" class="is-warn"><i class="bi bi-hourglass-split"></i> {{ pending_invites_count }} приглашений ожидают ответа</a>{% endif %}
+      {% if teacher_unpaid_count and is_teacher %}<a href="{% url 'tutor:finances' %}" class="is-warn"><i class="bi bi-cash"></i> {{ teacher_unpaid_count }} к оплате</a>{% endif %}
+      {% if debt_total %}<a href="{% url 'tutor:finances' %}" class="is-danger"><i class="bi bi-wallet2"></i> Долг {{ debt_total }} ₽</a>{% elif unpaid_count %}<a href="{% url 'tutor:finances' %}" class="is-danger"><i class="bi bi-wallet2"></i> {{ unpaid_count }} неоплачено</a>{% endif %}
+      {% if hw_pending %}<a href="{% url 'tutor:homework_list' %}?view=assigned"><i class="bi bi-journal"></i> {{ hw_pending }} ДЗ</a>{% endif %}
+    </div>
+    {% endif %}
+
+    {% if pending_requests %}
+    <div class="tutor-card mb-4" id="requests">
+      <div class="tutor-card__head"><h2 class="tutor-card__title">Запросы на прикрепление</h2></div>
+      <div class="tutor-card__body">
+        {% for link in pending_requests %}
+        <div class="fin-row">
+          <div class="fin-row__main">
+            <div class="fin-row__title">{{ link.teacher.get_full_name|default:link.teacher.username }}</div>
+            <div class="fin-row__meta">@{{ link.teacher.username }}</div>
+          </div>
+          <div class="d-flex gap-2">
+            <form method="post" action="{% url 'tutor:student_request_accept' link.pk %}">{% csrf_token %}<button type="submit" class="btn btn-primary btn-sm">Принять</button></form>
+            <form method="post" action="{% url 'tutor:student_request_reject' link.pk %}">{% csrf_token %}<button type="submit" class="btn btn-ghost btn-sm">Отклонить</button></form>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="tutor-quick">
+      <a href="{% url 'tutor:schedule' %}"><i class="bi bi-calendar3"></i><strong>Расписание</strong><span>Календарь</span></a>
+      <a href="{% url 'tutor:homework_list' %}"><i class="bi bi-journal-check"></i><strong>Задания</strong><span>ДЗ</span></a>
+      <a href="{% url 'tutor:finances' %}"><i class="bi bi-cash-stack"></i><strong>Финансы</strong><span>Оплата</span></a>
+      {% if is_teacher %}<a href="{% url 'tutor:students_manage' %}"><i class="bi bi-people"></i><strong>Ученики</strong><span>Приглашения</span></a>{% endif %}
+    </div>
+
+    {% if is_teacher and upcoming_teach %}
+    <div class="tutor-card mb-4">
+      <div class="tutor-card__head">
+        <h2 class="tutor-card__title"><i class="bi bi-easel2 me-1"></i> Ближайшие занятия</h2>
+        <a href="{% url 'tutor:schedule' %}?role=teach" class="btn btn-ghost btn-sm">Всё расписание</a>
+      </div>
+      <div class="tutor-card__body">
+        {% for l in upcoming_teach %}
+        <a href="{% url 'tutor:lesson_update' l.pk %}" class="tutor-row">
+          <div class="tutor-row__when">{{ l.date|date:"d.m" }}<span>{{ l.start_time|time:"H:i" }}</span></div>
+          <div class="tutor-row__main">
+            <div class="tutor-row__title">{{ l.subject }}</div>
+            <div class="tutor-row__meta">{{ l.student.get_full_name|default:l.student.username|default:"—" }}</div>
+          </div>
+          <span class="badge text-bg-primary">{{ l.get_status_display }}</span>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    {% if is_student and upcoming_learn %}
+    <div class="tutor-card">
+      <div class="tutor-card__head">
+        <h2 class="tutor-card__title"><i class="bi bi-mortarboard me-1"></i> Мои уроки</h2>
+        <a href="{% url 'tutor:schedule' %}?role=learn" class="btn btn-ghost btn-sm">Всё расписание</a>
+      </div>
+      <div class="tutor-card__body">
+        {% for l in upcoming_learn %}
+        <div class="tutor-row">
+          <div class="tutor-row__when">{{ l.date|date:"d.m" }}<span>{{ l.start_time|time:"H:i" }}</span></div>
+          <div class="tutor-row__main">
+            <div class="tutor-row__title">{{ l.subject }}</div>
+            <div class="tutor-row__meta">{{ l.teacher.get_full_name|default:l.teacher.username }}</div>
+          </div>
+          <span class="badge text-bg-primary">{{ l.get_status_display }}</span>
+        </div>
+        {% empty %}
+        <div class="tutor-empty">Нет запланированных занятий.</div>
+        {% endfor %}
+      </div>
+    </div>
+    {% elif not is_teacher and not upcoming_learn %}
+    <div class="tutor-card">
+      <div class="tutor-card__head"><h2 class="tutor-card__title">Мои уроки</h2></div>
+      <div class="tutor-empty">Нет запланированных занятий. <a href="{% url 'tutor:schedule' %}">Расписание</a></div>
+    </div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

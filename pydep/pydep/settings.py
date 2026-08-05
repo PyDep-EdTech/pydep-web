@@ -7,11 +7,22 @@ load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'django-insecure-wj9zg(7hniron4bnmurb@7shm*v53@q)fbh@7df==qbrw4=1fg'
+SECRET_KEY = os.getenv("SECRET_KEY")
 
-DEBUG = True
+DEBUG = os.getenv("DEBUG")
 
 ALLOWED_HOSTS = ['*']
+
+# HTTPS за nginx (Django 4+)
+CSRF_TRUSTED_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv(
+        'CSRF_TRUSTED_ORIGINS',
+        'https://pydep.ru,https://www.pydep.ru',
+    ).split(',')
+    if origin.strip()
+]
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 INSTALLED_APPS = [
     'lesson',
@@ -24,8 +35,7 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'django_ckeditor_5',
+    'django.contrib.staticfiles'
     "api",
     'sorl.thumbnail',
     "widget_tweaks",
@@ -83,26 +93,16 @@ BASE = {
     },
     'PostgreSQL': {
         'default': {
-            'ENGINE': os.getenv('DB_ENGINE', default='django.db.backends.postgresql'),
-            'NAME': os.getenv('DB_NAME', default='postgres'),
-            'USER': os.getenv('POSTGRES_USER', default='postgres'),
-            'PASSWORD': os.getenv('POSTGRES_PASSWORD', default='pwdU124@3'),
-            'HOST': os.getenv('DB_HOST', default='localhost'),
-            'PORT': os.getenv('DB_PORT', default='5432')
+            'ENGINE': os.getenv('DB_ENGINE'),
+            'NAME': os.getenv('DB_NAME'),
+            'USER': os.getenv('POSTGRES_USER'),
+            'PASSWORD': os.getenv('POSTGRES_PASSWORD'),
+            'HOST': os.getenv('DB_HOST'),
+            'PORT': os.getenv('DB_PORT')
         }
     }
 }
-DATABASES = BASE.get('SQLite3')
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': 'postgres',
-#         'USER': 'postgres',
-#         'PASSWORD': 'pwdU124@3',
-#         'HOST': 'localhost',
-#         'PORT': '5432',
-#     }
-# }
+DATABASES = BASE.get("SQLite3")
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -128,6 +128,7 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATICFILES_DIRS = (os.path.join(BASE_DIR, 'static'),)
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -137,6 +138,11 @@ LOGOUT_REDIRECT_URL = 'lesson:index'
 AUTH_USER_MODEL = 'users.CustomUser'
 
 AUTH_GROUP_MODEL = 'lesson.CustomGroup'
+
+# Регистронезависимый вход по логину (admin == Admin).
+AUTHENTICATION_BACKENDS = [
+    'users.backends.CaseInsensitiveModelBackend',
+]
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
@@ -168,77 +174,4 @@ customColorPalette = [
     },
 ]
 
-# CKEDITOR_5_CUSTOM_CSS = f'{BASE_DIR}/static/css/ckeditor.css}'  # optional
-# CKEDITOR_5_FILE_STORAGE = "path_to_storage.CustomStorage"  # optional
-CKEDITOR_5_CONFIGS = {
-    'default': {
-        'toolbar': ['heading', '|', 'bold', 'italic', 'link',
-                    'bulletedList', 'numberedList', 'blockQuote',
-                    'imageUpload', ],
-
-    },
-    'extends': {
-        'blockToolbar': [
-            'paragraph', 'heading1', 'heading2', 'heading3',
-            '|',
-            'bulletedList', 'numberedList',
-            '|',
-            'blockQuote',
-        ],
-        'toolbar': ['heading', '|', 'outdent', 'indent', '|', 'bold', 'italic',
-                    'link', 'underline', 'strikethrough',
-                    'code', 'subscript', 'superscript', 'highlight', '|',
-                    'codeBlock', 'sourceEditing', 'insertImage',
-                    'bulletedList', 'numberedList', 'todoList', '|',
-                    'blockQuote', 'imageUpload', '|',
-                    'fontSize', 'fontFamily', 'fontColor',
-                    'fontBackgroundColor', 'mediaEmbed', 'removeFormat',
-                    'insertTable', ],
-        'image': {
-            'toolbar': ['imageTextAlternative', '|', 'imageStyle:alignLeft',
-                        'imageStyle:alignRight', 'imageStyle:alignCenter',
-                        'imageStyle:side', '|'],
-            'styles': [
-                'full',
-                'side',
-                'alignLeft',
-                'alignRight',
-                'alignCenter',
-            ]
-
-        },
-        'table': {
-            'contentToolbar': ['tableColumn', 'tableRow', 'mergeTableCells',
-                               'tableProperties', 'tableCellProperties'],
-            'tableProperties': {
-                'borderColors': customColorPalette,
-                'backgroundColors': customColorPalette
-            },
-            'tableCellProperties': {
-                'borderColors': customColorPalette,
-                'backgroundColors': customColorPalette
-            }
-        },
-        'heading': {
-            'options': [
-                {'model': 'paragraph', 'title': 'Paragraph',
-                 'class': 'ck-heading_paragraph'},
-                {'model': 'heading1', 'view': 'h1', 'title': 'Heading 1',
-                 'class': 'ck-heading_heading1'},
-                {'model': 'heading2', 'view': 'h2', 'title': 'Heading 2',
-                 'class': 'ck-heading_heading2'},
-                {'model': 'heading3', 'view': 'h3', 'title': 'Heading 3',
-                 'class': 'ck-heading_heading3'}
-            ]
-        }
-    },
-    'list': {
-        'properties': {
-            'styles': 'true',
-            'startIndex': 'true',
-            'reversed': 'true',
-        }
-    }
-}
-
-COUNT_POSTS = 3
+COUNT_POSTS = 16

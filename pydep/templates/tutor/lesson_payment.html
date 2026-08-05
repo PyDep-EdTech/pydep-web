@@ -5,23 +5,33 @@
 
 {% block content %}
 <section class="py-5">
-  <div class="container px-5">
-    <h1 class="fw-bold mb-4">Отметить оплату: <span class="text-danger">{{ lesson.subject }}</span></h1>
-    <div class="card shadow-sm">
-      <div class="card-body">
-        <p class="mb-3 text-muted">{{ lesson.date|date:"d.m.Y" }}, {{ lesson.start_time|time:"H:i" }}–{{ lesson.end_time|time:"H:i" }}</p>
-        <form method="post" class="d-flex align-items-center gap-3">
-          {% csrf_token %}
-          <div>
-            {{ form.is_paid.label_tag }}
+  <div class="container tutor-page lesson-form-page">
+    {% url 'tutor:schedule' as back_url %}
+    {% include 'course_editor/includes/back_button.html' with back_label="Назад к расписанию" %}
+
+    <div class="lesson-form-header">
+      <h1 class="fw-bold"><span class="text-gradient">{{ lesson.subject }}</span></h1>
+      <p>{{ lesson.date|date:"d.m.Y" }}, {{ lesson.start_time|time:"H:i" }}–{{ lesson.end_time|time:"H:i" }}</p>
+    </div>
+
+    <form method="post" class="lesson-form">
+      {% csrf_token %}
+      <section class="lesson-form-section">
+        <div class="lesson-paid-card">
+          <div class="lesson-paid-card__text">
+            <strong>{{ form.is_paid.label }}</strong>
+            <span>Отметьте, если занятие оплачено учеником.</span>
+          </div>
+          <div class="form-check form-switch m-0">
             {{ form.is_paid }}
           </div>
-          <button type="submit" class="btn btn-danger">Сохранить</button>
-          <a href="{% url 'tutor:schedule' %}" class="btn btn-outline-secondary">Отмена</a>
-        </form>
+        </div>
+      </section>
+      <div class="lesson-form-actions">
+        <a href="{% url 'tutor:schedule' %}" class="btn btn-ghost">Отмена</a>
+        <button type="submit" class="btn btn-primary">Сохранить</button>
       </div>
-    </div>
+    </form>
   </div>
 </section>
 {% endblock %}
-

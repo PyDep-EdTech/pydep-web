@@ -33,6 +33,7 @@ def course(db):
         image="test/test.jpg",
         programming_language="Python",
         category=category,
+        price=0,
     )
     course.modules.add(module, module2)
     course.save()
@@ -71,7 +72,7 @@ def test_course_detail_ok_if_auth(client, course):
     client.force_login(user)
     url = reverse(
         "lesson:course_detail",
-        kwargs={"course_name": course.name
+        kwargs={"course_slug": course.slug
                 }
     )
     response = client.get(url)
@@ -86,8 +87,8 @@ def test_module_detail_ok_if_auth(client, course):
     url = reverse(
         "lesson:module_detail",
         kwargs={
-            "course_name": course.name,
-            "module_name": course.modules.first().title
+            "course_slug": course.slug,
+            "module_slug": course.modules.first().slug
         }
     )
     response = client.get(url)
@@ -104,7 +105,7 @@ def test_complete_lesson_marks_done_and_opens_next(client, course, user):
     url = reverse(
         "lesson:course_detail",
         kwargs={
-            "course_name": course.name
+            "course_slug": course.slug
         }
     )
     response = client.get(url)
@@ -114,9 +115,9 @@ def test_complete_lesson_marks_done_and_opens_next(client, course, user):
     url = reverse(
         "lesson:complete_lesson",
         kwargs={
-            "course_name": course.name,
-            "module_name": module1.title,
-            "lesson_name": lesson1.title
+            "course_slug": course.slug,
+            "module_slug": module1.slug,
+            "lesson_slug": lesson1.slug
         }
     )
     response = client.post(url)
@@ -124,8 +125,8 @@ def test_complete_lesson_marks_done_and_opens_next(client, course, user):
     assert reverse(
         "lesson:module_detail",
         kwargs={
-            "course_name": course.name,
-            "module_name": module1.title
+            "course_slug": course.slug,
+            "module_slug": module1.slug
         }
     ) in response.url
 
@@ -149,9 +150,9 @@ def test_complete_lesson_marks_done_and_opens_next(client, course, user):
 
     url_lesson_1_module_2 = reverse(
         "lesson:lesson_detail",
-        kwargs={"course_name": course.name,
-                "module_name": module2.title,
-                "lesson_name": lesson1.title
+        kwargs={"course_slug": course.slug,
+                "module_slug": module2.slug,
+                "lesson_slug": lesson1.slug
                 }
     )
     response = client.get(url_lesson_1_module_2)
@@ -160,9 +161,9 @@ def test_complete_lesson_marks_done_and_opens_next(client, course, user):
     url = reverse(
         "lesson:complete_lesson",
         kwargs={
-            "course_name": course.name,
-            "module_name": module1.title,
-            "lesson_name": lesson2.title
+            "course_slug": course.slug,
+            "module_slug": module1.slug,
+            "lesson_slug": lesson2.slug
         }
     )
     response = client.post(url)
@@ -170,7 +171,7 @@ def test_complete_lesson_marks_done_and_opens_next(client, course, user):
     assert reverse(
         "lesson:module_detail",
         kwargs={
-            "course_name": course.name, "module_name": module1.title}
+            "course_slug": course.slug, "module_slug": module1.slug}
     ) in response.url
 
     response = client.get(url_lesson_1_module_2)

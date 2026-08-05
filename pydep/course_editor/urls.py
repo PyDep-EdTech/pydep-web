@@ -2,6 +2,9 @@ from django.urls import path
 
 from .views import lesson_create
 from .views import lesson_edit
+from .views import practice_task_save
+from .views import practice_task_delete
+from .views import practice_task_reorder
 from .views import upload_image
 from .views import course_editor_main
 from .views import course_create
@@ -9,6 +12,7 @@ from .views import module_create
 from .views import my_courses
 from .views import course_edit
 from .views import module_edit
+from .views import studio_reorder
 
 app_name = 'studio'
 
@@ -49,6 +53,21 @@ urlpatterns = [
         name='lesson_edit'
     ),
     path(
+        'course/<int:course_id>/module/<int:module_id>/lesson/<int:lesson_id>/practice/save/',
+        practice_task_save,
+        name='practice_task_save'
+    ),
+    path(
+        'course/<int:course_id>/module/<int:module_id>/lesson/<int:lesson_id>/practice/delete/',
+        practice_task_delete,
+        name='practice_task_delete'
+    ),
+    path(
+        'course/<int:course_id>/module/<int:module_id>/lesson/<int:lesson_id>/practice/reorder/',
+        practice_task_reorder,
+        name='practice_task_reorder'
+    ),
+    path(
         'upload-image/',
         upload_image,
         name='upload_image'
@@ -57,5 +76,10 @@ urlpatterns = [
         "my_courses/",
         my_courses,
         name="my_courses"
+    ),
+    path(
+        "api/reorder/",
+        studio_reorder,
+        name="reorder"
     ),
 ]

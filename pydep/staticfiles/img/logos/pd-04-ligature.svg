@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none" role="img" aria-label="PyDep PD">
+  <defs>
+    <linearGradient id="g4" x1="28" y1="20" x2="92" y2="100" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8b7bff"/>
+      <stop offset="1" stop-color="#3b9eff"/>
+    </linearGradient>
+  </defs>
+  <rect width="120" height="120" rx="24" fill="#0f0f14"/>
+  <!-- P stem flows into D -->
+  <path fill="url(#g4)" d="M36 24h24c14.2 0 23.5 8.8 23.5 22.5 0 8.5-4.2 14.5-11 17.8L80 96H66L55 74H48V96H36V24zm12 12v26h10.5c6.2 0 10-3.5 10-10s-3.8-10-10-10H48z"/>
+  <path fill="#fff" fill-opacity=".94" d="M68 24h20c16.8 0 28 11.8 28 36s-11.2 36-28 36H68V24zm12 12v48h8c10.8 0 17-7.8 17-24s-6.2-24-17-24h-8z"/>
+  <path fill="url(#g4)" opacity=".55" d="M60 58h8v6h-8z"/>
+</svg>

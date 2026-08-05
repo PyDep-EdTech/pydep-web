@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 260" role="img" aria-label="&8:; for">
+  <rect width="720" height="260" rx="16" fill="#1E1E21"/>
+  <text x="360" y="32" text-anchor="middle" fill="#F1EFEA" font-size="18" font-weight="700">for item in collection</text>
+  <rect x="280" y="50" width="160" height="40" rx="20" fill="#26262A" stroke="#FFB020" stroke-width="2"/>
+  <text x="360" y="76" text-anchor="middle" fill="#E2E0DA" font-size="13">=0G0;> F8:;0</text>
+  <line x1="360" y1="90" x2="360" y2="115" stroke="#989790" stroke-width="2"/>
+  <rect x="240" y="115" width="240" height="50" rx="8" fill="#2F2F34" stroke="#54D6B4" stroke-width="2"/>
+  <text x="360" y="138" text-anchor="middle" fill="#54D6B4" font-family="monospace" font-size="12">27OBL A;54CNI89 M;5<5=B</text>
+  <text x="360" y="156" text-anchor="middle" fill="#989790" font-size="11">2K?>;=8BL B5;> F8:;0</text>
+  <path d="M360 165 L360 185 L520 185 L520 140 L480 140" fill="none" stroke="#989790" stroke-width="2"/>
+  <text x="540" y="175" fill="#67665F" font-size="11">5IQ 5ABL?</text>
+  <rect x="280" y="200" width="160" height="40" rx="20" fill="#26262A" stroke="#FFB020" stroke-width="2"/>
+  <text x="360" y="226" text-anchor="middle" fill="#E2E0DA" font-size="13">:>=5F</text>
+</svg>

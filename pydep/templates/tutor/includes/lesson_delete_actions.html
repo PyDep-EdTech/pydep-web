@@ -1,0 +1,30 @@
+{% if lesson %}
+<div class="lesson-delete-actions d-inline-flex gap-1">
+  <form method="post" action="{% url 'tutor:lesson_delete' lesson.pk %}" class="d-inline">
+    {% csrf_token %}
+    <input type="hidden" name="scope" value="single">
+    <button type="button" class="btn btn-sm btn-ghost text-danger" title="Удалить занятие"
+      data-pydep-confirm
+      data-confirm-title="Удалить занятие?"
+      data-confirm-message="Удалить занятие {{ lesson.date|date:'d.m.Y' }}? Это действие нельзя отменить."
+      data-confirm-ok="Удалить"
+      data-confirm-variant="danger">
+      <i class="bi bi-trash"></i>
+    </button>
+  </form>
+  {% if lesson.series_count > 1 %}
+  <form method="post" action="{% url 'tutor:lesson_delete' lesson.pk %}" class="d-inline">
+    {% csrf_token %}
+    <input type="hidden" name="scope" value="series">
+    <button type="button" class="btn btn-sm btn-outline-danger" title="Удалить всю серию"
+      data-pydep-confirm
+      data-confirm-title="Удалить серию занятий?"
+      data-confirm-message="Удалить все {{ lesson.series_count }} занятий этой серии повторов? Это действие нельзя отменить."
+      data-confirm-ok="Удалить все"
+      data-confirm-variant="danger">
+      <i class="bi bi-trash3 me-1"></i>{{ lesson.series_count }}
+    </button>
+  </form>
+  {% endif %}
+</div>
+{% endif %}

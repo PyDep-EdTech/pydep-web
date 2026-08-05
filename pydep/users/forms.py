@@ -12,9 +12,9 @@ class SignInForm(AuthenticationForm):
         max_length=150,
         widget=forms.TextInput(
             attrs={
-                'class': 'form-control form-container',
+                'class': 'form-control',
                 'placeholder': 'Введите ваше имя пользователя',
-                'id': "floatingInput"
+                'autofocus': True,
             }
         ),
     )
@@ -23,9 +23,9 @@ class SignInForm(AuthenticationForm):
         strip=False,
         widget=PasswordInput(
             attrs={
-                'class': 'form-control form-container',
+                'class': 'form-control',
                 'placeholder': 'Введите пароль',
-                'autocomplete': 'new-password'
+                'autocomplete': 'current-password',
             }
         ),
     )
@@ -36,80 +36,79 @@ class SignInForm(AuthenticationForm):
 
 
 class SignUpForm(UserCreationForm):
-    username = forms.CharField(
-        widget=forms.TextInput(
-            attrs={
-                'class': 'form-control form-container',
-                'placeholder': 'Введите ваше имя пользователя',
-                'id': "floatingInput"
-            }
-        ),
-        label='Имя пользователя'
-    )
     first_name = forms.CharField(
+        label='Имя',
         widget=forms.TextInput(
-            attrs={
-                'class': 'form-control form-container',
-                'placeholder': 'Введите ваше имя',
-                'id': "floatingInput"
-            }
+            attrs={'class': 'form-control', 'placeholder': 'Иван'}
         ),
-        label='Имя'
     )
     last_name = forms.CharField(
+        label='Фамилия',
         widget=forms.TextInput(
-            attrs={
-                'class': 'form-control form-container',
-                'placeholder': 'Введите вашу фамилию',
-                'id': "floatingInput"
-            }
+            attrs={'class': 'form-control', 'placeholder': 'Иванов'}
         ),
-        label='Фамилия'
+    )
+    username = forms.CharField(
+        label='Имя пользователя',
+        widget=forms.TextInput(
+            attrs={'class': 'form-control', 'placeholder': 'ivan_dev'}
+        ),
     )
     email = forms.EmailField(
+        label='Почта',
         widget=forms.EmailInput(
-            attrs={
-                'class': 'form-control form-container',
-                'placeholder': 'Введите ваш email',
-                'type': "email",
-                'id': "floatingInput"
-            }
+            attrs={'class': 'form-control', 'placeholder': 'ivan@example.com'}
         ),
-        label='Почта'
     )
     image = forms.ImageField(
-        widget=forms.ClearableFileInput(
-            attrs={
-                'class': 'form-control form-container',
-                'placeholder': 'Выберите изображение',
-                'id': "floatingInput"
-            }
-        ),
+        label='Фотография профиля',
         required=False,
-        label='Фотография'
+        widget=forms.ClearableFileInput(
+            attrs={'class': 'img-upload__input', 'accept': 'image/*'}
+        ),
     )
     password1 = forms.CharField(
         label='Пароль',
         strip=False,
         widget=PasswordInput(
             attrs={
-                'class': 'form-control form-container',
-                'placeholder': 'Введите пароль',
-                'autocomplete': 'new-password'}),
-        help_text='Пароль должен содержать не менее 8 символов.'
+                'class': 'form-control',
+                'placeholder': 'Минимум 8 символов',
+                'autocomplete': 'new-password',
+            }
+        ),
+        help_text='Не менее 8 символов, не только цифры.',
     )
     password2 = forms.CharField(
         label='Подтверждение пароля',
         strip=False,
         widget=PasswordInput(
             attrs={
-                'class': 'form-control form-container',
-                'placeholder': 'Введите пароль',
-                'autocomplete': 'new-password'}),
-        help_text=(
-            'Повторите пароль. Должен совпадать и быть не короче 8 символов.'
-        )
+                'class': 'form-control',
+                'placeholder': 'Повторите пароль',
+                'autocomplete': 'new-password',
+            }
+        ),
+        help_text='Повторите пароль для проверки.',
     )
+
+    def clean_username(self):
+        username = self.cleaned_data.get('username')
+        if username and CustomUser.objects.filter(
+            username__iexact=username
+        ).exists():
+            raise forms.ValidationError(
+                'Пользователь с таким именем уже существует.'
+            )
+        return username
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if email and CustomUser.objects.filter(email__iexact=email).exists():
+            raise forms.ValidationError(
+                'Этот email уже зарегистрирован.'
+            )
+        return email
 
     class Meta(UserCreationForm.Meta):
         model = CustomUser
@@ -120,5 +119,5 @@ class SignUpForm(UserCreationForm):
             'email',
             'image',
             'password1',
-            'password2'
+            'password2',
         )

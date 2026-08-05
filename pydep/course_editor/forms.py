@@ -15,6 +15,10 @@ class CreateLessonForm(forms.ModelForm):
         model = Lesson
         fields = ("title", "description", "content_blocks")
         widgets = {
+            'title': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Название урока',
+            }),
             'description': CKEditor5Widget(config_name='extends'),
             'content_blocks': forms.HiddenInput(),
         }
@@ -50,16 +54,6 @@ class CreateLessonForm(forms.ModelForm):
 
 
 class CourseForm(forms.ModelForm):
-    modules = forms.ModelMultipleChoiceField(
-        queryset=Module.objects.all(),
-        required=False,
-        widget=forms.CheckboxSelectMultiple(attrs={
-            "class": "form-check-input",
-        }),
-        label="Выберите модули",
-        help_text="Выберите существующие модули или создайте новый"
-    )
-    
     class Meta:
         model = Course
         fields = (
@@ -105,18 +99,14 @@ class CourseForm(forms.ModelForm):
             }),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["image"].required = False
+        if not self.instance.pk:
+            self.fields["programming_language"].required = False
+
 
 class ModuleForm(forms.ModelForm):
-    lessons = forms.ModelMultipleChoiceField(
-        queryset=Lesson.objects.all(),
-        required=False,
-        widget=forms.CheckboxSelectMultiple(attrs={
-            "class": "form-check-input",
-        }),
-        label="Выберите уроки",
-        help_text="Выберите существующие уроки или создайте новый"
-    )
-    
     class Meta:
         model = Module
         fields = (
@@ -138,3 +128,7 @@ class ModuleForm(forms.ModelForm):
                 "class": "form-control",
             }),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["image"].required = False

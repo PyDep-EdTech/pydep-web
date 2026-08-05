@@ -1,0 +1,39 @@
+{% load static %}
+<div class="student-link-row">
+  {% if link.student.image %}
+    <img src="{{ link.student.image.url }}" alt="" class="student-link-row__avatar">
+  {% else %}
+    <img src="{% static 'img/anonymous_user.png' %}" alt="" class="student-link-row__avatar">
+  {% endif %}
+  <div class="flex-grow-1 min-width-0">
+    <div class="student-link-row__name">{{ link.student.get_full_name|default:link.student.username }}</div>
+    <div class="student-link-row__login">@{{ link.student.username }}</div>
+    {% if lessons_count is not None %}
+      <div class="student-link-row__meta">Занятий: {{ lessons_count }}</div>
+    {% endif %}
+  </div>
+  {% if rate_form %}
+  <form method="post" action="{% url 'tutor:student_set_rate' link.pk %}" class="student-rate-form">
+    {% csrf_token %}
+    {% if rate_next %}<input type="hidden" name="next" value="{{ rate_next }}">{% endif %}
+    <span class="rate-badge">₽/час</span>
+    {{ rate_form.hourly_rate }}
+    <button type="submit" class="btn btn-primary btn-sm">Сохранить</button>
+  </form>
+  {% elif link.hourly_rate is not None %}
+  <span class="student-link-row__rate">{{ link.hourly_rate }} ₽/час</span>
+  {% else %}
+  <span class="student-link-row__rate student-link-row__rate--empty">ставка не задана</span>
+  {% endif %}
+  {% if show_unlink %}
+  <form method="post" action="{% url 'tutor:student_unlink' link.pk %}">
+    {% csrf_token %}
+    <button type="button" class="btn btn-outline-danger btn-sm"
+      data-pydep-confirm
+      data-confirm-title="Открепить ученика?"
+      data-confirm-message="Ученик {{ link.student.get_full_name|default:link.student.username }} будет откреплён от вас."
+      data-confirm-ok="Открепить"
+      data-confirm-variant="warning">Открепить</button>
+  </form>
+  {% endif %}
+</div>

@@ -1,0 +1,39 @@
+{% if "/tutor" in request.path %}
+<div id="fx-intro" data-platform="tutor" aria-hidden="true">
+    <div class="fx-intro-inner">
+        <div class="fx-logo-stage">
+            <div class="fx-logo-glow" aria-hidden="true"></div>
+            {% include 'includes/platform_logo_animated.html' with platform='tutor' size=180 id_prefix='fx-intro' extra_class='fx-logo' %}
+        </div>
+    </div>
+</div>
+{% elif "/studio" in request.path %}
+<div id="fx-intro" data-platform="studio" aria-hidden="true">
+    <div class="fx-intro-inner">
+        <div class="fx-logo-stage">
+            <div class="fx-logo-glow" aria-hidden="true"></div>
+            {% include 'includes/platform_logo_animated.html' with platform='studio' size=180 id_prefix='fx-intro' extra_class='fx-logo' %}
+        </div>
+    </div>
+</div>
+{% else %}
+<div id="fx-intro" data-platform="pydep" aria-hidden="true">
+    <div class="fx-intro-inner">
+        <div class="fx-logo-stage">
+            <div class="fx-logo-glow" aria-hidden="true"></div>
+            {% include 'includes/platform_logo_animated.html' with platform='pydep' size=180 id_prefix='fx-intro' extra_class='fx-logo' %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div id="fx-transition" data-platform="pydep" aria-hidden="true">
+    <div class="fx-tr-inner">
+        <div class="fx-logo-stage fx-logo-stage--transition">
+            <div class="fx-logo-glow" aria-hidden="true"></div>
+            {% include 'includes/platform_logo_animated.html' with platform='pydep' size=168 id_prefix='fx-tr-pydep' extra_class='fx-tr-badge fx-tr-badge--pydep' %}
+            {% include 'includes/platform_logo_animated.html' with platform='tutor' size=168 id_prefix='fx-tr-tutor' extra_class='fx-tr-badge fx-tr-badge--tutor' %}
+            {% include 'includes/platform_logo_animated.html' with platform='studio' size=168 id_prefix='fx-tr-studio' extra_class='fx-tr-badge fx-tr-badge--studio' %}
+        </div>
+    </div>
+</div>
